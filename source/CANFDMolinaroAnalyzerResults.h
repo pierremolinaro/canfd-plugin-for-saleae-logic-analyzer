@@ -1,13 +1,34 @@
-#ifndef CANFDMOLINARO_ANALYZER_RESULTS
-#define CANFDMOLINARO_ANALYZER_RESULTS
+#ifndef CANMOLINARO_ANALYZER_RESULTS
+#define CANMOLINARO_ANALYZER_RESULTS
+
+//--------------------------------------------------------------------------------------------------
 
 #include <AnalyzerResults.h>
+
+//--------------------------------------------------------------------------------------------------
+
+enum CanFrameType {
+  STANDARD_IDENTIFIER_FIELD_RESULT,
+  EXTENDED_IDENTIFIER_FIELD_RESULT,
+  CONTROL_FIELD_RESULT,
+  DATA_FIELD_RESULT,
+  CRC15_FIELD_RESULT,
+  CRC17_FIELD_RESULT,
+  CRC21_FIELD_RESULT,
+  ACK_FIELD_RESULT,
+  EOF_FIELD_RESULT,
+  INTERMISSION_FIELD_RESULT,
+  CAN_ERROR_RESULT
+} ;
+
+//--------------------------------------------------------------------------------------------------
 
 class CANFDMolinaroAnalyzer;
 class CANFDMolinaroAnalyzerSettings;
 
-class CANFDMolinaroAnalyzerResults : public AnalyzerResults
-{
+//--------------------------------------------------------------------------------------------------
+
+class CANFDMolinaroAnalyzerResults : public AnalyzerResults {
 public:
 	CANFDMolinaroAnalyzerResults( CANFDMolinaroAnalyzer* analyzer, CANFDMolinaroAnalyzerSettings* settings );
 	virtual ~CANFDMolinaroAnalyzerResults();
@@ -20,10 +41,16 @@ public:
 	virtual void GenerateTransactionTabularText( U64 transaction_id, DisplayBase display_base );
 
 protected: //functions
+  void GenerateText (const Frame & inFrame,
+                     const DisplayBase inDisplayBase,
+                     const bool inBubbleText,
+                     std::stringstream & ioText) ;
 
 protected:  //vars
 	CANFDMolinaroAnalyzerSettings* mSettings;
 	CANFDMolinaroAnalyzer* mAnalyzer;
 };
 
-#endif //CANFDMOLINARO_ANALYZER_RESULTS
+//--------------------------------------------------------------------------------------------------
+
+#endif //CANMOLINARO_ANALYZER_RESULTS
