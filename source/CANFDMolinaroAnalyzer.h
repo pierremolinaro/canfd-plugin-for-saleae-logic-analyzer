@@ -48,7 +48,7 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
   private: U64 mStartOfFieldSampleNumber ;
 //--- CAN protocol
   private: typedef enum  {
-    IDLE, IDENTIFIER, CONTROL_BASE, CONTROL_EXTENDED, CONTROL_AFTER_R0, DATA, CRC15, CRC17,
+    IDLE, IDENTIFIER, CONTROL_BASE, CONTROL_EXTENDED, CONTROL_AFTER_R0, DATA, CRC15, CRC17, CRC21,
     CRCDEL, ACK, ENDOFFRAME, INTERMISSION, DECODER_ERROR
   } FrameFieldEngineState ;
 
@@ -96,6 +96,7 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
   private: void handle_DATA_state (const bool inBit, const U64 inSampleNumber) ;
   private: void handle_CRC15_state (const bool inBit, const U64 inSampleNumber) ;
   private: void handle_CRC17_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_CRC21_state (const bool inBit, const U64 inSampleNumber) ;
   private: void handle_CRCDEL_state (const bool inBit, const U64 inSampleNumber) ;
   private: void handle_ACK_state (const bool inBit, const U64 inSampleNumber) ;
   private: void handle_ENDOFFRAME_state (const bool inBit, const U64 inSampleNumber) ;

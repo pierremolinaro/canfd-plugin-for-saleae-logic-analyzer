@@ -50,8 +50,8 @@ mBitRate (125 * 1000) {
   mSimulatorFrameTypeGenerationInterface->AddNumber (4.0, "Only CAN2.0B Extended Remote Frames", "") ;
   mSimulatorFrameTypeGenerationInterface->AddNumber (5.0, "Only CANFD Base Data Frames, 0-16 bytes", "") ;
   mSimulatorFrameTypeGenerationInterface->AddNumber (6.0, "Only CANFD Extended Data Frames, 0-16 bytes", "") ;
-  mSimulatorFrameTypeGenerationInterface->AddNumber (7.0, "Only CANFD Base Data Frames, 24-64 bytes", "") ;
-  mSimulatorFrameTypeGenerationInterface->AddNumber (8.0, "Only CANFD Extended Data Frames, 24-64 bytes", "") ;
+  mSimulatorFrameTypeGenerationInterface->AddNumber (7.0, "Only CANFD Base Data Frames, 20-64 bytes", "") ;
+  mSimulatorFrameTypeGenerationInterface->AddNumber (8.0, "Only CANFD Extended Data Frames, 20-64 bytes", "") ;
   mSimulatorFrameTypeGenerationInterface->SetNumber (0.0) ;
 
 //--- Install interfaces

@@ -503,6 +503,8 @@ void CANMolinaroSimulationDataGenerator::CreateCANFrame () {
   case GENERATE_ALL_FRAME_TYPES :
     extended = (random () & 1) != 0 ;
     remoteFrame = (random () & 1) != 0 ;
+    canfd_0_16 = (random () & 1) != 0 ;
+    canfd_24_64 = (random () & 1) != 0 ;
     break ;
   case GENERATE_ONLY_STANDARD_DATA :
     break ;
@@ -568,7 +570,7 @@ void CANMolinaroSimulationDataGenerator::CreateCANFrame () {
     uint8_t data [64] ;
     const FrameFormat format = extended ? FrameFormat::extended : FrameFormat::standard ;
     const uint32_t identifier = uint32_t (random ()) & (extended ? 0x1FFFFFFF : 0x7FF) ;
-    const uint8_t dataLengthCode = uint8_t (random ()) % 5 + 11 ; // 11, 12, ..., 15
+    const uint8_t dataLengthCode = uint8_t (random ()) % 5 + 11 ; // 11, ..., 15
     for (uint32_t i=0 ; i<CANFDFrameBitsGenerator::lengthForCode (dataLengthCode) ; i++) {
       data [i] = uint8_t (random ()) ;
     }
