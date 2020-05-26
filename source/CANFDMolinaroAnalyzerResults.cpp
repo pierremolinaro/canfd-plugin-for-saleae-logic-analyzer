@@ -39,13 +39,18 @@ void CANFDMolinaroAnalyzerResults::GenerateText (const Frame & inFrame,
     ioText << ((inFrame.mData2 == 0) ? "Extended Remote idf: " : "Extended Data idf: ") ;
     ioText << numberString ;
     break ;
-  case CONTROL_FIELD_RESULT :
-    if (inBubbleText) {
-      ioText << "Ctrl: " << inFrame.mData1 ;
-      if (inFrame.mData2 != 0) {
-        ioText << " (FDF)" ;
-      }
+  case CAN20B_CONTROL_FIELD_RESULT :
+   ioText << "Ctrl: " << inFrame.mData1 ;
+    break ;
+  case CANFD_CONTROL_FIELD_RESULT :
+    ioText << "Ctrl: " << inFrame.mData1 << " (FDF" ;
+    if ((inFrame.mData2 & 1) != 0) {
+      ioText << ", BRS" ;
     }
+    if ((inFrame.mData2 & 2) != 0) {
+      ioText << ", ESI" ;
+    }
+    ioText << ")" ;
     break ;
   case DATA_FIELD_RESULT :
     AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 8, numberString, 128);

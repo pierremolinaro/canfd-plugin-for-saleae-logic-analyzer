@@ -33,10 +33,6 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
 
 	public: virtual bool NeedsRerun();
 
-  private: void enterBit (const bool inBit, const U64 inSampleNumber) ;
-  private: void decodeFrameBit (const bool inBit, const U64 inSampleNumber) ;
-
-
 //--- Protected properties
   protected: std::auto_ptr< CANFDMolinaroAnalyzerSettings > mSettings;
 	protected: std::auto_ptr< CANFDMolinaroAnalyzerResults > mResults;
@@ -48,12 +44,12 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
 	//Serial analysis vars:
 	protected: U32 mSampleRateHz;
 
-//---------------- CAN decoder properties
+//---------------- CAN decoder
   private: U64 mStartOfFieldSampleNumber ;
 //--- CAN protocol
   private: typedef enum  {
-    IDLE, IDENTIFIER, EXTENDED_IDF, CONTROL, DATA, CRC15, CRC17, CRCDEL, ACK,
-    ENDOFFRAME, INTERMISSION, STUFF_ERROR
+    IDLE, IDENTIFIER, CONTROL_BASE, CONTROL_EXTENDED, CONTROL_AFTER_R0, DATA, CRC15, CRC17,
+    CRCDEL, ACK, ENDOFFRAME, INTERMISSION, DECODER_ERROR
   } FrameFieldEngineState ;
 
   private: FrameFieldEngineState mFrameFieldEngineState ;
@@ -64,8 +60,12 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
 
 //--- Received frame
   private: uint32_t mIdentifier ;
+  private: typedef enum {base, extended} FrameFormat ;
+  private: FrameFormat mFrameFormat ;
   private: typedef enum {canData, remote, canfdData} FrameType ;
   private: FrameType mFrameType ;
+  private: bool mBRS ;
+  private: bool mESI ;
   private: U32 mDataCodeLength ;
   private: U8 mData [64] ;
   private: U16 mCRC15Accumulator ;
@@ -76,12 +76,31 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
   private: U32 mCRC21 ;
 
 //---------------- CAN decoder methods
+  private: void enterBit (const bool inBit, const U64 inSampleNumber) ;
+  private: void decodeFrameBit (const bool inBit, const U64 inSampleNumber) ;
   private: void enterBitInCRC15 (const bool inBit) ;
   private: void enterBitInCRC17 (const bool inBit) ;
   private: void enterBitInCRC21 (const bool inBit) ;
   private: void addMark (const U64 inSampleNumber, const AnalyzerResults::MarkerType inMarker) ;
-  private: void addBubble (const U8 inBubbleType, const U64 inData1, const U64 inData2, const U64 inEndSampleNumber) ;
+  private: void addBubble (const U8 inBubbleType,
+                           const U64 inData1,
+                           const U64 inData2,
+                           const U64 inEndSampleNumber) ;
   private: void enterInErrorMode (const U64 inSampleNumber) ;
+
+  private: void handle_IDLE_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_IDENTIFIER_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_CONTROL_BASE_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_CONTROL_EXTENDED_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_CONTROL_AFTER_R0_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_DATA_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_CRC15_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_CRC17_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_CRCDEL_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_ACK_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_ENDOFFRAME_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_INTERMISSION_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_DECODER_ERROR_state (const bool inBit, const U64 inSampleNumber) ;
 } ;
 
 //--------------------------------------------------------------------------------------------------
