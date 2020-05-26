@@ -9,10 +9,10 @@
 //--------------------------------------------------------------------------------------------------
 
 typedef enum {
-  GENERATE_ACK_DOMINANT,
-  GENERATE_ACK_RECESSIVE,
-  GENERATE_ACK_RANDOMLY
-} SimulatorGeneratedAckSlot ;
+  GENERATE_BIT_DOMINANT,
+  GENERATE_BIT_RECESSIVE,
+  GENERATE_BIT_RANDOMLY
+} SimulatorGeneratedBit ;
 
 //--------------------------------------------------------------------------------------------------
 
@@ -46,8 +46,12 @@ public:
 
   public: bool inverted (void) const { return mInverted ; }
 
-  public: SimulatorGeneratedAckSlot generatedAckSlot (void) const {
+  public: SimulatorGeneratedBit generatedAckSlot (void) const {
     return mSimulatorGeneratedAckSlot ;
+  }
+
+  public: SimulatorGeneratedBit generatedESISlot (void) const {
+    return mSimulatorGeneratedESISlot ;
   }
 
   public: SimulatorGeneratedFrameType generatedFrameType (void) const {
@@ -59,9 +63,11 @@ protected:
   std::auto_ptr< AnalyzerSettingInterfaceInteger >  mBitRateInterface;
   std::auto_ptr< AnalyzerSettingInterfaceNumberList > mCanChannelInvertedInterface ;
   std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorAckGenerationInterface ;
+  std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorESIGenerationInterface ;
   std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorFrameTypeGenerationInterface ;
 
-  SimulatorGeneratedAckSlot mSimulatorGeneratedAckSlot = GENERATE_ACK_DOMINANT ;
+  SimulatorGeneratedBit mSimulatorGeneratedAckSlot = GENERATE_BIT_DOMINANT ;
+  SimulatorGeneratedBit mSimulatorGeneratedESISlot = GENERATE_BIT_DOMINANT ;
   SimulatorGeneratedFrameType mSimulatorGeneratedFrameType = GENERATE_ALL_FRAME_TYPES ;
   bool mInverted = false ;
 };

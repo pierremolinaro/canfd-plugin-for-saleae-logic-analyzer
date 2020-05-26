@@ -17,7 +17,7 @@ typedef enum {data, remote} FrameType ;
 
 //--------------------------------------------------------------------------------------------------
 
-typedef enum {ACK_SLOT_DOMINANT, ACK_SLOT_RECESSIVE} AckSlot ;
+typedef enum {DOMINANT_BIT, RECESSIVE_BIT} GeneratedBit ;
 
 //--------------------------------------------------------------------------------------------------
 
@@ -31,7 +31,7 @@ class CANFrameBitsGenerator {
                                   const uint8_t inDataLength,
                                   const uint8_t inData [8],
                                   const FrameType inFrameType,
-                                  const AckSlot inAckSlot) ;
+                                  const GeneratedBit inAckSlot) ;
 
 //--- Public methods
   public : inline uint32_t frameLength (void) const { return mFrameLength ; }
@@ -59,7 +59,7 @@ CANFrameBitsGenerator::CANFrameBitsGenerator (const uint32_t inIdentifier,
                                               const uint8_t inDataLength,
                                               const uint8_t inData [8],
                                               const FrameType inFrameType,
-                                              const AckSlot inAckSlot) :
+                                              const GeneratedBit inAckSlot) :
 mBits (),
 mFrameLength (0) {
   for (uint32_t i=0 ; i<5 ; i++) {
@@ -113,10 +113,10 @@ mFrameLength (0) {
 //--- Enter ACK, EOF, INTERMISSION
   enterBitNoStuff (true) ; // CRC DEL
   switch (inAckSlot) {
-  case AckSlot::ACK_SLOT_DOMINANT :
+  case GeneratedBit::DOMINANT_BIT :
     enterBitNoStuff (false) ;
     break ;
-  case AckSlot::ACK_SLOT_RECESSIVE :
+  case GeneratedBit::RECESSIVE_BIT :
     enterBitNoStuff (true) ;
     break ;
   }
@@ -199,7 +199,8 @@ class CANFDFrameBitsGenerator {
                                     const ProtocolType inProtocolType,
                                     const uint8_t inDataLength,
                                     const uint8_t inData [64],
-                                    const AckSlot inAckSlot) ;
+                                    const GeneratedBit inAckSlot,
+                                    const GeneratedBit inESISlot) ;
 
 //--- Public methods
   public: inline uint8_t dataLengthCode (void) const { return mDataLengthCode ; }
@@ -231,7 +232,7 @@ class CANFDFrameBitsGenerator {
   private: const uint8_t mDataLengthCode ;
   private: const FrameFormat mFrameFormat ;
   private: const ProtocolType mProtocolType ;
-  private: const AckSlot mAckSlot ;
+  private: const GeneratedBit mAckSlot ;
 
   private: bool mLastBitValue ;
   private: uint8_t mConsecutiveBitCount ;
@@ -244,7 +245,8 @@ CANFDFrameBitsGenerator::CANFDFrameBitsGenerator (const uint32_t inIdentifier,
                                                   const ProtocolType inProtocolType,
                                                   const uint8_t inDataLengthCode,
                                                   const uint8_t inData [64],
-                                                  const AckSlot inAckSlot) :
+                                                  const GeneratedBit inAckSlot,
+                                                  const GeneratedBit inESISlot) :
 mBits (),
 mData (),
 mIdentifier (inIdentifier),
@@ -304,7 +306,14 @@ mConsecutiveBitCount (1) {
   enterBitComputeCRCAppendStuff (true) ; // FDF
   enterBitComputeCRCAppendStuff (false) ; // R0
   enterBitComputeCRCAppendStuff (false) ; // BRS
-  enterBitComputeCRCAppendStuff (false) ; // ESI
+  switch (inESISlot) {
+  case DOMINANT_BIT:
+    enterBitComputeCRCAppendStuff (false) ; // ESI
+    break ;
+  case RECESSIVE_BIT:
+    enterBitComputeCRCAppendStuff (true) ; // ESI
+    break ;
+  }
   enterBitComputeCRCAppendStuff ((mDataLengthCode & 8) != 0) ;
   enterBitComputeCRCAppendStuff ((mDataLengthCode & 4) != 0) ;
   enterBitComputeCRCAppendStuff ((mDataLengthCode & 2) != 0) ;
@@ -355,10 +364,10 @@ mConsecutiveBitCount (1) {
   enterBitInFrame (true) ;
 //--- Enter ACK, EOF, INTERMISSION
   switch (mAckSlot) {
-  case ACK_SLOT_DOMINANT :
+  case DOMINANT_BIT :
     enterBitInFrame (false) ;
     break ;
-  case ACK_SLOT_RECESSIVE :
+  case RECESSIVE_BIT :
     enterBitInFrame (true) ;
     break ;
   }
@@ -534,15 +543,27 @@ void CANMolinaroSimulationDataGenerator::CreateCANFrame () {
     break ;
   }
 //--- Select ACK SLOT level
-  AckSlot ack = AckSlot::ACK_SLOT_DOMINANT ;
+  GeneratedBit ack = GeneratedBit::DOMINANT_BIT ;
   switch (mSettings->generatedAckSlot ()) {
-  case GENERATE_ACK_DOMINANT :
+  case GENERATE_BIT_DOMINANT :
     break ;
-  case GENERATE_ACK_RECESSIVE :
-    ack = AckSlot::ACK_SLOT_RECESSIVE ;
+  case GENERATE_BIT_RECESSIVE :
+    ack = GeneratedBit::RECESSIVE_BIT ;
     break ;
-  GENERATE_ACK_RANDOMLY :
-    ack = ((random () & 1) != 0) ? AckSlot::ACK_SLOT_DOMINANT : AckSlot::ACK_SLOT_RECESSIVE ;
+  case GENERATE_BIT_RANDOMLY :
+    ack = ((random () & 1) != 0) ? GeneratedBit::DOMINANT_BIT : GeneratedBit::RECESSIVE_BIT ;
+    break ;
+  }
+//--- Select ESI level
+  GeneratedBit esi = GeneratedBit::DOMINANT_BIT ;
+  switch (mSettings->generatedESISlot ()) {
+  case GENERATE_BIT_DOMINANT :
+    break ;
+  case GENERATE_BIT_RECESSIVE :
+    esi = GeneratedBit::RECESSIVE_BIT ;
+    break ;
+  case GENERATE_BIT_RANDOMLY :
+    esi = ((random () & 1) != 0) ? GeneratedBit::DOMINANT_BIT : GeneratedBit::RECESSIVE_BIT ;
     break ;
   }
 //--- Let's move forward for 11 recessive bits
@@ -558,7 +579,7 @@ void CANMolinaroSimulationDataGenerator::CreateCANFrame () {
     for (uint32_t i=0 ; i<CANFDFrameBitsGenerator::lengthForCode (dataLengthCode) ; i++) {
       data [i] = uint8_t (random ()) ;
     }
-    const CANFDFrameBitsGenerator frame (identifier, format, protocol, dataLengthCode, data, ack) ;
+    const CANFDFrameBitsGenerator frame (identifier, format, protocol, dataLengthCode, data, ack, esi) ;
   //--- Now, send frame
     for (U32 i=0 ; i < frame.frameLength () ; i++) {
       const bool bit = frame.bitAtIndex (i) ^ inverted ;
@@ -574,7 +595,7 @@ void CANMolinaroSimulationDataGenerator::CreateCANFrame () {
     for (uint32_t i=0 ; i<CANFDFrameBitsGenerator::lengthForCode (dataLengthCode) ; i++) {
       data [i] = uint8_t (random ()) ;
     }
-    const CANFDFrameBitsGenerator frame (identifier, format, protocol, dataLengthCode, data, ack) ;
+    const CANFDFrameBitsGenerator frame (identifier, format, protocol, dataLengthCode, data, ack, esi) ;
   //--- Now, send frame
     for (U32 i=0 ; i < frame.frameLength () ; i++) {
       const bool bit = frame.bitAtIndex (i) ^ inverted ;

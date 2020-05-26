@@ -40,6 +40,19 @@ mBitRate (125 * 1000) {
                                                "Random",
                                "The simulator generates dominant or recessive level randomly") ;
 
+//--- Simulator ESI level
+  mSimulatorESIGenerationInterface.reset (new AnalyzerSettingInterfaceNumberList ()) ;
+	mSimulatorESIGenerationInterface->SetTitleAndTooltip ("Simulator ESI generated level", "");
+  mSimulatorESIGenerationInterface->AddNumber (0.0,
+                                               "Dominant",
+                                               "Dominant means the sender is error active") ;
+  mSimulatorESIGenerationInterface->AddNumber (1.0,
+                                               "Recessive",
+                                               "Recessive means the sender is error passive") ;
+  mSimulatorESIGenerationInterface->AddNumber (2.0,
+                                               "Random",
+                               "The simulator generates dominant or recessive level randomly") ;
+
 //--- Simulator Generated frames
   mSimulatorFrameTypeGenerationInterface.reset (new AnalyzerSettingInterfaceNumberList ()) ;
 	mSimulatorFrameTypeGenerationInterface->SetTitleAndTooltip ("Simulator Generated Frames", "");
@@ -60,6 +73,7 @@ mBitRate (125 * 1000) {
 	AddInterface (mCanChannelInvertedInterface.get ());
 	AddInterface (mSimulatorAckGenerationInterface.get ());
 	AddInterface (mSimulatorFrameTypeGenerationInterface.get ());
+	AddInterface (mSimulatorESIGenerationInterface.get ());
 
 	AddExportOption( 0, "Export as text/csv file" );
 	AddExportExtension( 0, "text", "txt" );
@@ -78,12 +92,20 @@ CANFDMolinaroAnalyzerSettings::~CANFDMolinaroAnalyzerSettings(){
 
 bool CANFDMolinaroAnalyzerSettings::SetSettingsFromInterfaces () {
 	mInputChannel = mInputChannelInterface->GetChannel();
+
 	mBitRate = mBitRateInterface->GetInteger();
+
   mInverted = U32 (mCanChannelInvertedInterface->GetNumber ()) != 0 ;
+
   mSimulatorGeneratedAckSlot
-    = SimulatorGeneratedAckSlot (mSimulatorAckGenerationInterface->GetNumber ()) ;
+    = SimulatorGeneratedBit (mSimulatorAckGenerationInterface->GetNumber ()) ;
+
   mSimulatorGeneratedFrameType
     = SimulatorGeneratedFrameType (mSimulatorFrameTypeGenerationInterface->GetNumber ()) ;
+
+  mSimulatorGeneratedESISlot
+    = SimulatorGeneratedBit (mSimulatorESIGenerationInterface->GetNumber ()) ;
+
 	ClearChannels();
 	AddChannel (mInputChannel, "CANFD", true) ;
 
@@ -98,7 +120,7 @@ void CANFDMolinaroAnalyzerSettings::UpdateInterfacesFromSettings() {
 	mCanChannelInvertedInterface->SetNumber (double (mInverted)) ;
   mSimulatorAckGenerationInterface->SetNumber (mSimulatorGeneratedAckSlot) ;
   mSimulatorFrameTypeGenerationInterface->SetNumber (mSimulatorGeneratedFrameType) ;
-
+  mSimulatorESIGenerationInterface->SetNumber (mSimulatorGeneratedESISlot) ;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -111,10 +133,15 @@ void CANFDMolinaroAnalyzerSettings::LoadSettings (const char* settings) {
 	text_archive >> mBitRate;
 	text_archive >> mInverted;
   U32 value ;
+
 	text_archive >> value ;
-  mSimulatorGeneratedAckSlot = SimulatorGeneratedAckSlot (value) ;
+  mSimulatorGeneratedAckSlot = SimulatorGeneratedBit (value) ;
+
 	text_archive >> value ;
   mSimulatorGeneratedFrameType = SimulatorGeneratedFrameType (value) ;
+
+	text_archive >> value ;
+  mSimulatorGeneratedESISlot = SimulatorGeneratedBit (value) ;
 
 	ClearChannels();
 	AddChannel( mInputChannel, "CANFD (Molinaro)", true );
@@ -132,6 +159,7 @@ const char* CANFDMolinaroAnalyzerSettings::SaveSettings () {
 	text_archive << mInverted;
 	text_archive << U32 (mSimulatorGeneratedAckSlot) ;
 	text_archive << U32 (mSimulatorGeneratedFrameType) ;
+	text_archive << U32 (mSimulatorGeneratedESISlot) ;
 
 	return SetReturnString (text_archive.GetString ()) ;
 }
