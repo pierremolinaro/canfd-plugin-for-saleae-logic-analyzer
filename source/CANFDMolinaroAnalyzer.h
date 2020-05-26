@@ -76,6 +76,7 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
   private: FrameType mFrameType ;
   private: bool mBRS ;
   private: bool mESI ;
+  private: bool mDataBitRateActive ;
 
 //---------------- CAN decoder methods
   private: void enterBit (const bool inBit, const U64 inSampleNumber) ;

@@ -194,6 +194,7 @@ class CANFDFrameBitsGenerator {
                                     const FrameFormat inFrameFormat,
                                     const ProtocolSetting inProtocolType,
                                     const uint8_t inDataLength,
+                                    const GeneratedBit inBSR,
                                     const uint8_t inData [64],
                                     const GeneratedBit inAckSlot,
                                     const GeneratedBit inESISlot) ;
@@ -206,18 +207,20 @@ class CANFDFrameBitsGenerator {
   public: inline uint32_t stuffBitCount (void) const { return mStuffBitCount ; }
   public: inline uint32_t frameCRC (void) const { return mFrameCRC ; }
   public: bool bitAtIndex (const uint32_t inIndex) const ;
+  public: bool dataBitRateAtIndex (const uint32_t inIndex) const ;
 
 //--- Private methods (used during frame generation)
-  private: void enterBitComputeCRCAppendStuff (const bool inBit) ;
+  private: void enterBitComputeCRCAppendStuff (const bool inBit, const bool inUseDataBitRate) ;
 
-  private: void enterBitInFrame (const bool inBit) ;
+  private: void enterBitInFrame (const bool inBit, const bool inUseDataBitRate) ;
 
-  private: void enterBitInFrameComputeCRC (const bool inBit) ;
+  private: void enterBitInFrameComputeCRC (const bool inBit, const bool inUseDataBitRate) ;
 
    public: static uint8_t lengthForCode (const uint8_t inDataLengthCode) ;
 
 //--- Private properties
   private: uint32_t mBits [30] ;
+  private: uint32_t mDataRateBits [30] ;
   private: uint8_t mData [64] ;
   private: const uint32_t mIdentifier ;
   private: uint32_t mFrameCRC ;
@@ -240,10 +243,12 @@ CANFDFrameBitsGenerator::CANFDFrameBitsGenerator (const uint32_t inIdentifier,
                                                   const FrameFormat inFrameFormat,
                                                   const ProtocolSetting inProtocolType,
                                                   const uint8_t inDataLengthCode,
+                                                  const GeneratedBit inBSR,
                                                   const uint8_t inData [64],
                                                   const GeneratedBit inAckSlot,
                                                   const GeneratedBit inESISlot) :
 mBits (),
+mDataRateBits (),
 mData (),
 mIdentifier (inIdentifier),
 mFrameCRC (0),
@@ -258,7 +263,8 @@ mAckSlot (inAckSlot),
 mLastBitValue (true),
 mConsecutiveBitCount (1) {
   for (uint32_t i=0 ; i<30 ; i++) {
-    mBits [i] = UINT32_MAX ;
+    mBits [i] = UINT32_MAX ; // By default, all bits are recessive
+    mDataRateBits [i] = 0 ; // By default, all bits in Arbitration bit rate
   }
   const uint8_t dataByteCount = CANFDFrameBitsGenerator::lengthForCode (mDataLengthCode) ;
   for (uint8_t i=0 ; i<dataByteCount ; i++) {
@@ -274,55 +280,56 @@ mConsecutiveBitCount (1) {
     break ;
   }
 //--- Enter SOF
-  enterBitComputeCRCAppendStuff (false) ;
+  enterBitComputeCRCAppendStuff (false, false) ;
 //--- Enter Identifier
   switch (mFrameFormat) {
   case FrameFormat::extended :
     for (uint8_t idx = 28 ; idx >= 18 ; idx--) { // Identifier
       const bool bit = (mIdentifier & (1 << idx)) != 0 ;
-      enterBitComputeCRCAppendStuff (bit) ;
+      enterBitComputeCRCAppendStuff (bit, false) ;
     }
-    enterBitComputeCRCAppendStuff (true) ; // SRR
-    enterBitComputeCRCAppendStuff (true) ; // IDE
+    enterBitComputeCRCAppendStuff (true, false) ; // SRR
+    enterBitComputeCRCAppendStuff (true, false) ; // IDE
     for (int idx = 17 ; idx >= 0 ; idx--) { // Identifier
       const bool bit = (mIdentifier & (1 << idx)) != 0 ;
-      enterBitComputeCRCAppendStuff (bit) ;
+      enterBitComputeCRCAppendStuff (bit, false) ;
     }
     break ;
   case FrameFormat::standard :
     for (int idx = 10 ; idx >= 0 ; idx--) { // Identifier
       const bool bit = (mIdentifier & (1 << idx)) != 0 ;
-      enterBitComputeCRCAppendStuff (bit) ;
+      enterBitComputeCRCAppendStuff (bit, false) ;
     }
-    enterBitComputeCRCAppendStuff (false) ; // R1
+    enterBitComputeCRCAppendStuff (false, false) ; // R1
     break ;
   }
 //--- Enter DLC
-  enterBitComputeCRCAppendStuff (false) ; // IDE
-  enterBitComputeCRCAppendStuff (true) ; // FDF
-  enterBitComputeCRCAppendStuff (false) ; // R0
-  enterBitComputeCRCAppendStuff (false) ; // BRS
+  enterBitComputeCRCAppendStuff (false, false) ; // IDE
+  enterBitComputeCRCAppendStuff (true, false) ; // FDF
+  enterBitComputeCRCAppendStuff (false, false) ; // R0
+  const bool dataBitRate = inBSR == RECESSIVE_BIT ;
+  enterBitComputeCRCAppendStuff (dataBitRate, false) ; // BRS
   switch (inESISlot) {
   case DOMINANT_BIT:
-    enterBitComputeCRCAppendStuff (false) ; // ESI
+    enterBitComputeCRCAppendStuff (false, dataBitRate) ; // ESI
     break ;
   case RECESSIVE_BIT:
-    enterBitComputeCRCAppendStuff (true) ; // ESI
+    enterBitComputeCRCAppendStuff (true, dataBitRate) ; // ESI
     break ;
   }
-  enterBitComputeCRCAppendStuff ((mDataLengthCode & 8) != 0) ;
-  enterBitComputeCRCAppendStuff ((mDataLengthCode & 4) != 0) ;
-  enterBitComputeCRCAppendStuff ((mDataLengthCode & 2) != 0) ;
-  enterBitComputeCRCAppendStuff ((mDataLengthCode & 1) != 0) ;
+  enterBitComputeCRCAppendStuff ((mDataLengthCode & 8) != 0, dataBitRate) ;
+  enterBitComputeCRCAppendStuff ((mDataLengthCode & 4) != 0, dataBitRate) ;
+  enterBitComputeCRCAppendStuff ((mDataLengthCode & 2) != 0, dataBitRate) ;
+  enterBitComputeCRCAppendStuff ((mDataLengthCode & 1) != 0, dataBitRate) ;
 //--- Enter DATA
   bool lastBit = mLastBitValue ;
   for (uint8_t dataIdx = 0 ; dataIdx < dataByteCount ; dataIdx ++) {
     for (int bitIdx = 7 ; bitIdx >= 0 ; bitIdx--) {
       lastBit = (inData [dataIdx] & (1 << bitIdx)) != 0 ;
       if ((dataIdx == (dataByteCount - 1)) && (bitIdx == 0)) { // Last data bit
-        enterBitInFrameComputeCRC (lastBit) ;
+        enterBitInFrameComputeCRC (lastBit, dataBitRate) ;
       }else{
-        enterBitComputeCRCAppendStuff (lastBit) ;
+        enterBitComputeCRCAppendStuff (lastBit, dataBitRate) ;
       }
     }
   }
@@ -331,56 +338,56 @@ mConsecutiveBitCount (1) {
   case CANFD_NON_ISO_PROTOCOL :
     break ;
   case CANFD_ISO_PROTOCOL :
-    { enterBitInFrame (!lastBit) ;
+    { enterBitInFrame (!lastBit, dataBitRate) ;
       const uint8_t GRAY_CODE_PARITY [8] = {0, 3, 6, 5, 12, 15, 10, 9} ;
       const uint8_t code = GRAY_CODE_PARITY [mStuffBitCount % 8] ;
-      enterBitInFrameComputeCRC ((code & 8) != 0) ;
-      enterBitInFrameComputeCRC ((code & 4) != 0) ;
-      enterBitInFrameComputeCRC ((code & 2) != 0) ;
+      enterBitInFrameComputeCRC ((code & 8) != 0, dataBitRate) ;
+      enterBitInFrameComputeCRC ((code & 4) != 0, dataBitRate) ;
+      enterBitInFrameComputeCRC ((code & 2) != 0, dataBitRate) ;
       lastBit = (code & 1) != 0 ;
-      enterBitInFrameComputeCRC (lastBit) ;
+      enterBitInFrameComputeCRC (lastBit, dataBitRate) ;
     }
     break ;
   }
 //--- Enter CRC SEQUENCE
-  enterBitInFrame (!lastBit) ;
+  enterBitInFrame (!lastBit, dataBitRate) ;
   const uint32_t frameCRC = (mDataLengthCode > 10) ? mCRCAccumulator21 : mCRCAccumulator17 ;
   mFrameCRC = frameCRC ;
   const int crcFirstBitIndex = (mDataLengthCode > 10) ? 20 : 16 ;
   uint32_t bitCount = 0 ;
   for (int idx = crcFirstBitIndex ; idx >= 0 ; idx--) {
     const bool crc_bit = (frameCRC & (1 << idx)) != 0 ;
-    enterBitInFrame (crc_bit) ;
+    enterBitInFrame (crc_bit, dataBitRate) ;
     bitCount += 1 ;
     if (bitCount == 4) {
       bitCount = 0 ;
-      enterBitInFrame (!crc_bit) ;
+      enterBitInFrame (!crc_bit, dataBitRate) ;
     }
   }
-  enterBitInFrame (true) ;
+  enterBitInFrame (true, false) ; // CRC DEL (arbitration bit rate)
 //--- Enter ACK, EOF, INTERMISSION
   switch (mAckSlot) {
   case DOMINANT_BIT :
-    enterBitInFrame (false) ;
+    enterBitInFrame (false, false) ;
     break ;
   case RECESSIVE_BIT :
-    enterBitInFrame (true) ;
+    enterBitInFrame (true, false) ;
     break ;
   }
-  enterBitInFrame (true) ;
+  enterBitInFrame (true, false) ;
   for (uint8_t i=0 ; i<7 ; i++) {
-    enterBitInFrame (true) ;
+    enterBitInFrame (true, false) ;
   }
   for (uint8_t i=0 ; i<3 ; i++) {
-    enterBitInFrame (true) ;
+    enterBitInFrame (true, false) ;
   }
 }
 
 //--------------------------------------------------------------------------------------------------
 
-void CANFDFrameBitsGenerator::enterBitInFrameComputeCRC (const bool inBit) {
+void CANFDFrameBitsGenerator::enterBitInFrameComputeCRC (const bool inBit, const bool inUseDataBitRate) {
 //--- Enter bit in frame
-  enterBitInFrame (inBit) ;
+  enterBitInFrame (inBit, inUseDataBitRate) ;
 //--- Enter in CRC17
   const bool bit16 = (mCRCAccumulator17 & (1U << 16)) != 0 ;
   const bool crc17_nxt = inBit ^ bit16 ;
@@ -401,9 +408,9 @@ void CANFDFrameBitsGenerator::enterBitInFrameComputeCRC (const bool inBit) {
 
 //--------------------------------------------------------------------------------------------------
 
-void CANFDFrameBitsGenerator::enterBitComputeCRCAppendStuff (const bool inBit) {
+void CANFDFrameBitsGenerator::enterBitComputeCRCAppendStuff (const bool inBit, const bool inUseDataBitRate) {
 //--- Enter bit in frame
-  enterBitInFrameComputeCRC (inBit) ;
+  enterBitInFrameComputeCRC (inBit, inUseDataBitRate) ;
 //--- Add a stuff bit ?
   if (mLastBitValue == inBit) {
     mConsecutiveBitCount += 1 ;
@@ -411,7 +418,7 @@ void CANFDFrameBitsGenerator::enterBitComputeCRCAppendStuff (const bool inBit) {
       mConsecutiveBitCount = 1 ;
       mStuffBitCount += 1 ;
       mLastBitValue ^= true ;
-      enterBitInFrameComputeCRC (mLastBitValue) ;
+      enterBitInFrameComputeCRC (mLastBitValue, inUseDataBitRate) ;
     }
   }else{
     mLastBitValue = inBit ;
@@ -421,11 +428,14 @@ void CANFDFrameBitsGenerator::enterBitComputeCRCAppendStuff (const bool inBit) {
 
 //--------------------------------------------------------------------------------------------------
 
-void CANFDFrameBitsGenerator::enterBitInFrame (const bool inBit) {
+void CANFDFrameBitsGenerator::enterBitInFrame (const bool inBit, const bool inUseDataBitRate) {
+  const uint32_t idx = mFrameLength / 32 ;
+  const uint32_t offset = mFrameLength % 32 ;
   if (!inBit) {
-    const uint32_t idx = mFrameLength / 32 ;
-    const uint32_t offset = mFrameLength % 32 ;
     mBits [idx] &= ~ (1U << offset) ;
+  }
+  if (inUseDataBitRate) {
+    mDataRateBits [idx] |= (1U << offset) ;
   }
   mFrameLength += 1 ;
 }
@@ -438,6 +448,18 @@ bool CANFDFrameBitsGenerator::bitAtIndex (const uint32_t inIndex) const {
     const uint32_t idx = inIndex / 32 ;
     const uint32_t offset = inIndex % 32 ;
     result = (mBits [idx] & (1U << offset)) != 0 ;
+  }
+  return result ;
+}
+
+//--------------------------------------------------------------------------------------------------
+
+bool CANFDFrameBitsGenerator::dataBitRateAtIndex (const uint32_t inIndex) const {
+  bool result = false ;
+  if (inIndex < mFrameLength) {
+    const uint32_t idx = inIndex / 32 ;
+    const uint32_t offset = inIndex % 32 ;
+    result = (mDataRateBits [idx] & (1U << offset)) != 0 ;
   }
   return result ;
 }
@@ -495,7 +517,8 @@ U32 CANMolinaroSimulationDataGenerator::GenerateSimulationData (const U64 larges
 //--------------------------------------------------------------------------------------------------
 
 void CANMolinaroSimulationDataGenerator::CreateCANFrame () {
-  const U32 samples_per_bit = mSimulationSampleRateHz / mSettings->arbitrationBitRate () ;
+  const U32 samplesPerArbitrationBitRate = mSimulationSampleRateHz / mSettings->arbitrationBitRate () ;
+  const U32 samplesPerDataBitRate = mSimulationSampleRateHz / mSettings->dataBitRate () ;
   const bool inverted = mSettings->inverted () ;
   const SimulatorGeneratedFrameType frameTypes = mSettings->generatedFrameType () ;
   const ProtocolSetting protocol = mSettings->protocol () ;
@@ -550,6 +573,18 @@ void CANMolinaroSimulationDataGenerator::CreateCANFrame () {
     ack = ((random () & 1) != 0) ? GeneratedBit::DOMINANT_BIT : GeneratedBit::RECESSIVE_BIT ;
     break ;
   }
+//--- Select BSR level
+  GeneratedBit bsr = GeneratedBit::DOMINANT_BIT ;
+  switch (mSettings->generatedBSRSlot ()) {
+  case GENERATE_BIT_DOMINANT :
+    break ;
+  case GENERATE_BIT_RECESSIVE :
+    bsr = GeneratedBit::RECESSIVE_BIT ;
+    break ;
+  case GENERATE_BIT_RANDOMLY :
+    bsr = ((random () & 1) != 0) ? GeneratedBit::DOMINANT_BIT : GeneratedBit::RECESSIVE_BIT ;
+    break ;
+  }
 //--- Select ESI level
   GeneratedBit esi = GeneratedBit::DOMINANT_BIT ;
   switch (mSettings->generatedESISlot ()) {
@@ -564,8 +599,7 @@ void CANMolinaroSimulationDataGenerator::CreateCANFrame () {
   }
 //--- Let's move forward for 11 recessive bits
   mSerialSimulationData.TransitionIfNeeded (inverted ? BIT_LOW : BIT_HIGH) ;  // Edge for IDLE
-  mSerialSimulationData.Advance (samples_per_bit * 11) ;
-  mSerialSimulationData.TransitionIfNeeded (inverted ? BIT_HIGH : BIT_LOW) ;  // Edge for SOF bit
+  mSerialSimulationData.Advance (samplesPerArbitrationBitRate * 10) ;
 //--- Generate CANFD Frame, 0 to 16 bytes
   if (canfd_0_16) {
     uint8_t data [20] ;
@@ -575,12 +609,13 @@ void CANMolinaroSimulationDataGenerator::CreateCANFrame () {
     for (uint32_t i=0 ; i<CANFDFrameBitsGenerator::lengthForCode (dataLengthCode) ; i++) {
       data [i] = uint8_t (random ()) ;
     }
-    const CANFDFrameBitsGenerator frame (identifier, format, protocol, dataLengthCode, data, ack, esi) ;
+    const CANFDFrameBitsGenerator frame (identifier, format, protocol, dataLengthCode, bsr, data, ack, esi) ;
   //--- Now, send frame
     for (U32 i=0 ; i < frame.frameLength () ; i++) {
       const bool bit = frame.bitAtIndex (i) ^ inverted ;
+      const bool dataBitRate = frame.dataBitRateAtIndex (i) ;
+      mSerialSimulationData.Advance (dataBitRate ? samplesPerDataBitRate : samplesPerArbitrationBitRate) ;
       mSerialSimulationData.TransitionIfNeeded (bit ? BIT_HIGH : BIT_LOW) ;
-      mSerialSimulationData.Advance (samples_per_bit) ;
     }
 //--- Generate CANFD Frame, 24 to 64 bytes
   }else if (canfd_24_64) {
@@ -591,12 +626,13 @@ void CANMolinaroSimulationDataGenerator::CreateCANFrame () {
     for (uint32_t i=0 ; i<CANFDFrameBitsGenerator::lengthForCode (dataLengthCode) ; i++) {
       data [i] = uint8_t (random ()) ;
     }
-    const CANFDFrameBitsGenerator frame (identifier, format, protocol, dataLengthCode, data, ack, esi) ;
+    const CANFDFrameBitsGenerator frame (identifier, format, protocol, dataLengthCode, bsr, data, ack, esi) ;
   //--- Now, send frame
     for (U32 i=0 ; i < frame.frameLength () ; i++) {
       const bool bit = frame.bitAtIndex (i) ^ inverted ;
+      const bool dataBitRate = frame.dataBitRateAtIndex (i) ;
+      mSerialSimulationData.Advance (dataBitRate ? samplesPerDataBitRate : samplesPerArbitrationBitRate) ;
       mSerialSimulationData.TransitionIfNeeded (bit ? BIT_HIGH : BIT_LOW) ;
-      mSerialSimulationData.Advance (samples_per_bit) ;
     }
 //--- Generate CAN2.0B Frame
   }else{
@@ -614,11 +650,12 @@ void CANMolinaroSimulationDataGenerator::CreateCANFrame () {
   //--- Now, send frame
     for (U32 i=0 ; i < frame.frameLength () ; i++) {
       const bool bit = frame.bitAtIndex (i) ^ inverted ;
+      mSerialSimulationData.Advance (samplesPerArbitrationBitRate) ;
       mSerialSimulationData.TransitionIfNeeded (bit ? BIT_HIGH : BIT_LOW) ;
-      mSerialSimulationData.Advance (samples_per_bit) ;
     }
   }
 //--- We need to end recessive
+  mSerialSimulationData.Advance (samplesPerArbitrationBitRate) ;
   mSerialSimulationData.TransitionIfNeeded (inverted ? BIT_LOW : BIT_HIGH) ;
 }
 

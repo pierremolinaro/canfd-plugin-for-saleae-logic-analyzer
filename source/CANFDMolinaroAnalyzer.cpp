@@ -9,7 +9,8 @@
 CANFDMolinaroAnalyzer::CANFDMolinaroAnalyzer () :
 Analyzer2(),
 mSettings (new CANFDMolinaroAnalyzerSettings ()),
-mSimulationInitilized (false) {
+mSimulationInitilized (false),
+mDataBitRateActive (false) {
   SetAnalyzerSettings( mSettings.get() );
 }
 
@@ -27,7 +28,6 @@ void CANFDMolinaroAnalyzer::SetupResults () {
   mResults->AddChannelBubblesWillAppearOn( mSettings->mInputChannel );
 }
 
-
 //--------------------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::WorkerThread () {
@@ -35,7 +35,9 @@ void CANFDMolinaroAnalyzer::WorkerThread () {
   mSampleRateHz = GetSampleRate () ;
   mSerial = GetAnalyzerChannelData (mSettings->mInputChannel) ;
 //--- Sample settings
-  const U32 samplesPerArbitrationBitRate = mSampleRateHz / mSettings->arbitrationBitRate () ;
+  const U32 samplesPerArbitrationBit = mSampleRateHz / mSettings->arbitrationBitRate () ;
+  const U32 samplesPerDataBit = mSampleRateHz / mSettings->dataBitRate () ;
+  mDataBitRateActive = false ;
 //--- Synchronize to recessive level
   if (mSerial->GetBitState() == (inverted ? BIT_HIGH : BIT_LOW)) {
     mSerial->AdvanceToNextEdge () ;
@@ -44,6 +46,7 @@ void CANFDMolinaroAnalyzer::WorkerThread () {
   //--- Synchronize on falling edge: this SOF bit
     mFrameFieldEngineState = FrameFieldEngineState::IDLE ;
     mUnstuffingActive = false ;
+    mDataBitRateActive = false ;
   //--- Loop util the end of the frame (11 consecutive high bits)
     bool currentBitState = true ;
     do{
@@ -51,10 +54,20 @@ void CANFDMolinaroAnalyzer::WorkerThread () {
       currentBitState ^= true ;
       const U64 start = mSerial->GetSampleNumber () ;
       const U64 nextEdge = mSerial->GetSampleOfNextEdge () ;
-      const U64 bitCount = (nextEdge - start + samplesPerArbitrationBitRate / 2) / samplesPerArbitrationBitRate ;
-      for (U64 i=0 ; i<bitCount ; i++) {
-        enterBit (currentBitState, start + samplesPerArbitrationBitRate / 2 + i * samplesPerArbitrationBitRate) ;
+      U64 currentSample = start ;
+      U64 samplesPerBit = mDataBitRateActive ? samplesPerDataBit : samplesPerArbitrationBit ;
+      while ((currentSample + samplesPerBit / 2) < nextEdge) {
+        currentSample += samplesPerBit / 2 ; // Advance to center of bit
+        enterBit (currentBitState, currentSample) ;
+        samplesPerBit = mDataBitRateActive ? samplesPerDataBit : samplesPerArbitrationBit ;
+        currentSample += samplesPerBit / 2 ; // Advance to start of next bit
       }
+
+
+//       const U64 bitCount = (nextEdge - start + samplesPerArbitrationBit / 2) / samplesPerArbitrationBit ;
+//       for (U64 i=0 ; i<bitCount ; i++) {
+//         enterBit (currentBitState, start + samplesPerArbitrationBit / 2 + i * samplesPerArbitrationBit) ;
+//       }
     }while (mFrameFieldEngineState != FrameFieldEngineState::IDLE) ;
   //---
     mResults->CommitResults () ;
@@ -82,7 +95,10 @@ U32 CANFDMolinaroAnalyzer::GenerateSimulationData (U64 minimum_sample_index,
 //--------------------------------------------------------------------------------------------------
 
 U32 CANFDMolinaroAnalyzer::GetMinimumSampleRateHz () {
-  return mSettings->arbitrationBitRate () * 5 ;
+  const U32 arbitrationBitRate = mSettings->arbitrationBitRate () ;
+  const U32 dataBitRate = mSettings->dataBitRate () ;
+  const U32 max = (dataBitRate > arbitrationBitRate) ? dataBitRate : arbitrationBitRate ;
+  return max * 12 ;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -223,15 +239,15 @@ void CANFDMolinaroAnalyzer::handle_IDLE_state (const bool inBit, const U64 inSam
     mIdentifier = 0 ;
     mStuffBitCount = 0 ;
     mFrameFieldEngineState = FrameFieldEngineState::IDENTIFIER ;
-    const U32 samplesPerArbitrationBitRate = mSampleRateHz / mSettings->arbitrationBitRate () ;
-    mStartOfFieldSampleNumber = inSampleNumber + samplesPerArbitrationBitRate / 2 ;
+    const U32 samplesPerArbitrationBit = mSampleRateHz / mSettings->arbitrationBitRate () ;
+    mStartOfFieldSampleNumber = inSampleNumber + samplesPerArbitrationBit / 2 ;
   }
 }
 
 //--------------------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::handle_IDENTIFIER_state (const bool inBit, const U64 inSampleNumber) {
-  const U32 samplesPerArbitrationBitRate = mSampleRateHz / mSettings->arbitrationBitRate () ;
+  const U32 samplesPerArbitrationBit = mSampleRateHz / mSettings->arbitrationBitRate () ;
   enterBitInCRC15 (inBit) ;
   mFieldBitIndex ++ ;
   if (mFieldBitIndex <= 11) { // Standard identifier
@@ -244,7 +260,7 @@ void CANFDMolinaroAnalyzer::handle_IDENTIFIER_state (const bool inBit, const U64
     mFrameFormat = inBit ? FrameFormat::extended : FrameFormat::base ;
     if (!inBit) { // IDE dominant -> base frame
     //--- RTR mark
-      addMark (inSampleNumber - samplesPerArbitrationBitRate,
+      addMark (inSampleNumber - samplesPerArbitrationBit,
                inBit ? AnalyzerResults::UpArrow : AnalyzerResults::DownArrow) ;
     //--- IDE Mark
       addMark (inSampleNumber, AnalyzerResults::DownArrow) ;
@@ -252,12 +268,12 @@ void CANFDMolinaroAnalyzer::handle_IDENTIFIER_state (const bool inBit, const U64
       addBubble (STANDARD_IDENTIFIER_FIELD_RESULT,
                  mIdentifier,
                  mFrameType == FrameType::canData, // 0 -> remote, 1 -> data
-                 inSampleNumber - samplesPerArbitrationBitRate) ;
+                 inSampleNumber - samplesPerArbitrationBit) ;
       mFieldBitIndex = 0 ;
       mFrameFieldEngineState = FrameFieldEngineState::CONTROL_BASE ;
     }else{ // IDE recessive -> extended frame
     //--- SRR mark
-      addMark (inSampleNumber - samplesPerArbitrationBitRate, inBit ? AnalyzerResults::One : AnalyzerResults::ErrorSquare) ;
+      addMark (inSampleNumber - samplesPerArbitrationBit, inBit ? AnalyzerResults::One : AnalyzerResults::ErrorSquare) ;
     //--- IDE Mark
       addMark (inSampleNumber, AnalyzerResults::UpArrow) ;
     }
@@ -336,6 +352,7 @@ void CANFDMolinaroAnalyzer::handle_CONTROL_AFTER_R0_state (const bool inBit, con
     if (mFieldBitIndex == 1) { // BRS
       addMark (inSampleNumber, inBit ? AnalyzerResults::UpArrow : AnalyzerResults::DownArrow) ;
       mBRS = inBit ;
+      mDataBitRateActive = inBit ;
     }else if (mFieldBitIndex == 2) { // ESI
       addMark (inSampleNumber, inBit ? AnalyzerResults::UpArrow : AnalyzerResults::DownArrow) ;
       mESI = inBit ;
@@ -486,6 +503,7 @@ void CANFDMolinaroAnalyzer::handle_CRC17_state (const bool inBit, const U64 inSa
   mFieldBitIndex ++ ;
   if (mFieldBitIndex == 22) {
     mFieldBitIndex = 0 ;
+    mDataBitRateActive = false ;
     mFrameFieldEngineState = FrameFieldEngineState::CRCDEL ;
     addBubble (CRC17_FIELD_RESULT, mCRC17, mCRC17Accumulator, inSampleNumber) ;
   }
@@ -505,6 +523,7 @@ void CANFDMolinaroAnalyzer::handle_CRC21_state (const bool inBit, const U64 inSa
   mFieldBitIndex ++ ;
   if (mFieldBitIndex == 27) {
     mFieldBitIndex = 0 ;
+    mDataBitRateActive = false ;
     mFrameFieldEngineState = FrameFieldEngineState::CRCDEL ;
     addBubble (CRC21_FIELD_RESULT, mCRC21, mCRC21Accumulator, inSampleNumber) ;
   }
@@ -519,8 +538,8 @@ void CANFDMolinaroAnalyzer::handle_CRCDEL_state (const bool inBit, const U64 inS
   }else{
     enterInErrorMode (inSampleNumber) ;
   }
-  const U32 samplesPerArbitrationBitRate = mSampleRateHz / mSettings->arbitrationBitRate () ;
-  mStartOfFieldSampleNumber = inSampleNumber + samplesPerArbitrationBitRate / 2 ;
+  const U32 samplesPerArbitrationBit = mSampleRateHz / mSettings->arbitrationBitRate () ;
+  mStartOfFieldSampleNumber = inSampleNumber + samplesPerArbitrationBit / 2 ;
   mFrameFieldEngineState = FrameFieldEngineState::ACK ;
 }
 
@@ -658,10 +677,11 @@ void CANFDMolinaroAnalyzer::addBubble (const U8 inBubbleType,
 
 void CANFDMolinaroAnalyzer::enterInErrorMode (const U64 inSampleNumber) {
   addMark (inSampleNumber, AnalyzerResults::ErrorX);
-  const U32 samplesPerArbitrationBitRate = mSampleRateHz / mSettings->arbitrationBitRate () ;
-  mStartOfFieldSampleNumber = inSampleNumber + samplesPerArbitrationBitRate / 2 ;
+  const U32 samplesPerArbitrationBit = mSampleRateHz / mSettings->arbitrationBitRate () ;
+  mStartOfFieldSampleNumber = inSampleNumber + samplesPerArbitrationBit / 2 ;
   mFrameFieldEngineState = FrameFieldEngineState::DECODER_ERROR ;
   mUnstuffingActive = false ;
+  mDataBitRateActive = false ;
 }
 
 //--------------------------------------------------------------------------------------------------

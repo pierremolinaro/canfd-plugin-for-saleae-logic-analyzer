@@ -5,17 +5,29 @@
 
 CANFDMolinaroAnalyzerSettings::CANFDMolinaroAnalyzerSettings() :
 mInputChannel (UNDEFINED_CHANNEL),
-mArbitrationBitRate (125 * 1000) {
+mArbitrationBitRate (125 * 1000),
+mDataBitRate (500 * 1000) {
 	mInputChannelInterface.reset (new AnalyzerSettingInterfaceChannel ());
 	mInputChannelInterface->SetTitleAndTooltip ("Serial", "Standard Molinaro's CAN");
 	mInputChannelInterface->SetChannel (mInputChannel);
 
-	mBitRateInterface.reset (new AnalyzerSettingInterfaceInteger ()) ;
-	mBitRateInterface->SetTitleAndTooltip ("CAN Artitration Bit Rate (bit/s)",
-                                         "Specify the CAN arbitration bit rate in bits per second." );
-	mBitRateInterface->SetMax (25 * 1000 * 1000) ;
-	mBitRateInterface->SetMin (1) ;
-	mBitRateInterface->SetInteger (mArbitrationBitRate) ;
+//--- Arbitration Bit Rate
+	mArbitrationBitRateInterface.reset (new AnalyzerSettingInterfaceInteger ()) ;
+	mArbitrationBitRateInterface->SetTitleAndTooltip ("CAN Arbitration Bit Rate (bit/s)",
+                                         "CAN arbitration bit rate in bits per second." );
+
+	mArbitrationBitRateInterface->SetMax (1 * 1000 * 1000) ;
+	mArbitrationBitRateInterface->SetMin (1) ;
+	mArbitrationBitRateInterface->SetInteger (mArbitrationBitRate) ;
+
+//--- Data Bit Rate
+	mDataBitRateInterface.reset (new AnalyzerSettingInterfaceInteger ()) ;
+	mDataBitRateInterface->SetTitleAndTooltip ("CAN Data Bit Rate (bit/s)",
+                            "CAN data bit rate in bits per second, a multiple of Arbitration Bit Rate." );
+
+	mDataBitRateInterface->SetMax (12 * 1000 * 1000) ;
+	mDataBitRateInterface->SetMin (1) ;
+	mDataBitRateInterface->SetInteger (mDataBitRate) ;
 
 //--- Add Channel level inversion
 	mCanChannelInvertedInterface.reset (new AnalyzerSettingInterfaceNumberList ( )) ;
@@ -43,6 +55,19 @@ mArbitrationBitRate (125 * 1000) {
                                                "Recessive",
                                                "Recessive is the invalid level for ACK SLOT") ;
   mSimulatorAckGenerationInterface->AddNumber (2.0,
+                                               "Random",
+                               "The simulator generates dominant or recessive level randomly") ;
+
+//--- Simulator BSR level
+  mSimulatorBSRGenerationInterface.reset (new AnalyzerSettingInterfaceNumberList ()) ;
+	mSimulatorBSRGenerationInterface->SetTitleAndTooltip ("Simulator BSR generated level", "");
+  mSimulatorBSRGenerationInterface->AddNumber (0.0,
+                                               "Dominant (CANFD data sent with Arbitration Bit Rate)",
+                                               "") ;
+  mSimulatorBSRGenerationInterface->AddNumber (1.0,
+                                               "Recessive (CANFD data sent with Data Bit Rate)",
+                                               "") ;
+  mSimulatorBSRGenerationInterface->AddNumber (2.0,
                                                "Random",
                                "The simulator generates dominant or recessive level randomly") ;
 
@@ -75,11 +100,13 @@ mArbitrationBitRate (125 * 1000) {
 
 //--- Install interfaces
 	AddInterface (mInputChannelInterface.get ()) ;
-	AddInterface (mBitRateInterface.get ());
+	AddInterface (mArbitrationBitRateInterface.get ());
+	AddInterface (mDataBitRateInterface.get ());
 	AddInterface (mCanChannelInvertedInterface.get ());
 	AddInterface (mProtocolInterface.get ());
 	AddInterface (mSimulatorAckGenerationInterface.get ());
 	AddInterface (mSimulatorFrameTypeGenerationInterface.get ());
+	AddInterface (mSimulatorBSRGenerationInterface.get ());
 	AddInterface (mSimulatorESIGenerationInterface.get ());
 
 	AddExportOption( 0, "Export as text/csv file" );
@@ -100,7 +127,9 @@ CANFDMolinaroAnalyzerSettings::~CANFDMolinaroAnalyzerSettings(){
 bool CANFDMolinaroAnalyzerSettings::SetSettingsFromInterfaces () {
 	mInputChannel = mInputChannelInterface->GetChannel();
 
-	mArbitrationBitRate = mBitRateInterface->GetInteger();
+	mArbitrationBitRate = mArbitrationBitRateInterface->GetInteger();
+
+	mDataBitRate = mDataBitRateInterface->GetInteger();
 
   mInverted = U32 (mCanChannelInvertedInterface->GetNumber ()) != 0 ;
 
@@ -111,6 +140,9 @@ bool CANFDMolinaroAnalyzerSettings::SetSettingsFromInterfaces () {
 
   mSimulatorGeneratedFrameType
     = SimulatorGeneratedFrameType (mSimulatorFrameTypeGenerationInterface->GetNumber ()) ;
+
+  mSimulatorGeneratedBSRSlot
+    = SimulatorGeneratedBit (mSimulatorBSRGenerationInterface->GetNumber ()) ;
 
   mSimulatorGeneratedESISlot
     = SimulatorGeneratedBit (mSimulatorESIGenerationInterface->GetNumber ()) ;
@@ -125,11 +157,13 @@ bool CANFDMolinaroAnalyzerSettings::SetSettingsFromInterfaces () {
 
 void CANFDMolinaroAnalyzerSettings::UpdateInterfacesFromSettings () {
 	mInputChannelInterface->SetChannel (mInputChannel) ;
-	mBitRateInterface->SetInteger (mArbitrationBitRate) ;
+	mArbitrationBitRateInterface->SetInteger (mArbitrationBitRate) ;
+	mDataBitRateInterface->SetInteger (mDataBitRate) ;
 	mCanChannelInvertedInterface->SetNumber (double (mInverted)) ;
 	mProtocolInterface->SetNumber (double (mProtocol)) ;
   mSimulatorAckGenerationInterface->SetNumber (mSimulatorGeneratedAckSlot) ;
   mSimulatorFrameTypeGenerationInterface->SetNumber (mSimulatorGeneratedFrameType) ;
+  mSimulatorBSRGenerationInterface->SetNumber (mSimulatorGeneratedBSRSlot) ;
   mSimulatorESIGenerationInterface->SetNumber (mSimulatorGeneratedESISlot) ;
 }
 
@@ -142,6 +176,7 @@ void CANFDMolinaroAnalyzerSettings::LoadSettings (const char* settings) {
 
 	text_archive >> mInputChannel;
 	text_archive >> mArbitrationBitRate;
+	text_archive >> mDataBitRate;
 	text_archive >> mInverted;
 
 	text_archive >> value ;
@@ -156,6 +191,9 @@ void CANFDMolinaroAnalyzerSettings::LoadSettings (const char* settings) {
 	text_archive >> value ;
   mSimulatorGeneratedESISlot = SimulatorGeneratedBit (value) ;
 
+	text_archive >> value ;
+  mSimulatorGeneratedBSRSlot = SimulatorGeneratedBit (value) ;
+
 	ClearChannels();
 	AddChannel( mInputChannel, "CANFD (Molinaro)", true );
 
@@ -169,10 +207,12 @@ const char* CANFDMolinaroAnalyzerSettings::SaveSettings () {
 
 	text_archive << mInputChannel;
 	text_archive << mArbitrationBitRate;
+	text_archive << mDataBitRate;
 	text_archive << mInverted;
 	text_archive << U32 (mProtocol) ;
 	text_archive << U32 (mSimulatorGeneratedAckSlot) ;
 	text_archive << U32 (mSimulatorGeneratedFrameType) ;
+	text_archive << U32 (mSimulatorGeneratedBSRSlot) ;
 	text_archive << U32 (mSimulatorGeneratedESISlot) ;
 
 	return SetReturnString (text_archive.GetString ()) ;

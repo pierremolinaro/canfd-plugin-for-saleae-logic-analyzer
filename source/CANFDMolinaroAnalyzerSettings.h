@@ -52,10 +52,16 @@ public:
 
   public: U32 arbitrationBitRate (void) const { return mArbitrationBitRate ; }
 
+  public: U32 dataBitRate (void) const { return mDataBitRate ; }
+
   public: bool inverted (void) const { return mInverted ; }
 
   public: SimulatorGeneratedBit generatedAckSlot (void) const {
     return mSimulatorGeneratedAckSlot ;
+  }
+
+  public: SimulatorGeneratedBit generatedBSRSlot (void) const {
+    return mSimulatorGeneratedBSRSlot ;
   }
 
   public: SimulatorGeneratedBit generatedESISlot (void) const {
@@ -72,16 +78,20 @@ public:
 
 protected:
   std::auto_ptr< AnalyzerSettingInterfaceChannel >  mInputChannelInterface;
-  std::auto_ptr< AnalyzerSettingInterfaceInteger >  mBitRateInterface;
+  std::auto_ptr< AnalyzerSettingInterfaceInteger >  mArbitrationBitRateInterface;
+  std::auto_ptr< AnalyzerSettingInterfaceInteger >  mDataBitRateInterface;
   std::auto_ptr< AnalyzerSettingInterfaceNumberList > mCanChannelInvertedInterface ;
   std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorAckGenerationInterface ;
   std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorESIGenerationInterface ;
+  std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorBSRGenerationInterface ;
   std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorFrameTypeGenerationInterface ;
   std::auto_ptr< AnalyzerSettingInterfaceNumberList > mProtocolInterface ;
 
   U32 mArbitrationBitRate ;
+  U32 mDataBitRate ;
   SimulatorGeneratedBit mSimulatorGeneratedAckSlot = GENERATE_BIT_DOMINANT ;
   SimulatorGeneratedBit mSimulatorGeneratedESISlot = GENERATE_BIT_DOMINANT ;
+  SimulatorGeneratedBit mSimulatorGeneratedBSRSlot = GENERATE_BIT_DOMINANT ;
   SimulatorGeneratedFrameType mSimulatorGeneratedFrameType = GENERATE_ALL_FRAME_TYPES ;
   ProtocolSetting mProtocol = CANFD_ISO_PROTOCOL ;
   bool mInverted = false ;
