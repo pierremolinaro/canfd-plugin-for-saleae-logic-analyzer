@@ -5,17 +5,17 @@
 
 CANFDMolinaroAnalyzerSettings::CANFDMolinaroAnalyzerSettings() :
 mInputChannel (UNDEFINED_CHANNEL),
-mBitRate (125 * 1000) {
+mArbitrationBitRate (125 * 1000) {
 	mInputChannelInterface.reset (new AnalyzerSettingInterfaceChannel ());
 	mInputChannelInterface->SetTitleAndTooltip ("Serial", "Standard Molinaro's CAN");
 	mInputChannelInterface->SetChannel (mInputChannel);
 
 	mBitRateInterface.reset (new AnalyzerSettingInterfaceInteger ()) ;
-	mBitRateInterface->SetTitleAndTooltip ("CAN Bit Rate (bit/s)",
-                                         "Specify the CAN bit rate in bits per second." );
+	mBitRateInterface->SetTitleAndTooltip ("CAN Artitration Bit Rate (bit/s)",
+                                         "Specify the CAN arbitration bit rate in bits per second." );
 	mBitRateInterface->SetMax (25 * 1000 * 1000) ;
 	mBitRateInterface->SetMin (1) ;
-	mBitRateInterface->SetInteger (mBitRate) ;
+	mBitRateInterface->SetInteger (mArbitrationBitRate) ;
 
 //--- Add Channel level inversion
 	mCanChannelInvertedInterface.reset (new AnalyzerSettingInterfaceNumberList ( )) ;
@@ -26,6 +26,12 @@ mBitRate (125 * 1000) {
   mCanChannelInvertedInterface->AddNumber (1.0,
                                            "High",
                                            "High is the inverted dominant level") ;
+
+//--- Add Protocol
+	mProtocolInterface.reset (new AnalyzerSettingInterfaceNumberList ( )) ;
+	mProtocolInterface->SetTitleAndTooltip ("CANFD Protocol", "" );
+  mProtocolInterface->AddNumber (0.0, "ISO", "") ;
+  mProtocolInterface->AddNumber (1.0, "Non IS0", "") ;
 
 //--- Simulator ACK level
   mSimulatorAckGenerationInterface.reset (new AnalyzerSettingInterfaceNumberList ()) ;
@@ -71,6 +77,7 @@ mBitRate (125 * 1000) {
 	AddInterface (mInputChannelInterface.get ()) ;
 	AddInterface (mBitRateInterface.get ());
 	AddInterface (mCanChannelInvertedInterface.get ());
+	AddInterface (mProtocolInterface.get ());
 	AddInterface (mSimulatorAckGenerationInterface.get ());
 	AddInterface (mSimulatorFrameTypeGenerationInterface.get ());
 	AddInterface (mSimulatorESIGenerationInterface.get ());
@@ -93,9 +100,11 @@ CANFDMolinaroAnalyzerSettings::~CANFDMolinaroAnalyzerSettings(){
 bool CANFDMolinaroAnalyzerSettings::SetSettingsFromInterfaces () {
 	mInputChannel = mInputChannelInterface->GetChannel();
 
-	mBitRate = mBitRateInterface->GetInteger();
+	mArbitrationBitRate = mBitRateInterface->GetInteger();
 
   mInverted = U32 (mCanChannelInvertedInterface->GetNumber ()) != 0 ;
+
+  mProtocol = ProtocolSetting (mProtocolInterface->GetNumber ()) ;
 
   mSimulatorGeneratedAckSlot
     = SimulatorGeneratedBit (mSimulatorAckGenerationInterface->GetNumber ()) ;
@@ -114,10 +123,11 @@ bool CANFDMolinaroAnalyzerSettings::SetSettingsFromInterfaces () {
 
 //--------------------------------------------------------------------------------------------------
 
-void CANFDMolinaroAnalyzerSettings::UpdateInterfacesFromSettings() {
+void CANFDMolinaroAnalyzerSettings::UpdateInterfacesFromSettings () {
 	mInputChannelInterface->SetChannel (mInputChannel) ;
-	mBitRateInterface->SetInteger (mBitRate) ;
+	mBitRateInterface->SetInteger (mArbitrationBitRate) ;
 	mCanChannelInvertedInterface->SetNumber (double (mInverted)) ;
+	mProtocolInterface->SetNumber (double (mProtocol)) ;
   mSimulatorAckGenerationInterface->SetNumber (mSimulatorGeneratedAckSlot) ;
   mSimulatorFrameTypeGenerationInterface->SetNumber (mSimulatorGeneratedFrameType) ;
   mSimulatorESIGenerationInterface->SetNumber (mSimulatorGeneratedESISlot) ;
@@ -126,13 +136,16 @@ void CANFDMolinaroAnalyzerSettings::UpdateInterfacesFromSettings() {
 //--------------------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzerSettings::LoadSettings (const char* settings) {
+  U32 value ;
 	SimpleArchive text_archive;
 	text_archive.SetString (settings) ;
 
 	text_archive >> mInputChannel;
-	text_archive >> mBitRate;
+	text_archive >> mArbitrationBitRate;
 	text_archive >> mInverted;
-  U32 value ;
+
+	text_archive >> value ;
+  mProtocol = ProtocolSetting (value) ;
 
 	text_archive >> value ;
   mSimulatorGeneratedAckSlot = SimulatorGeneratedBit (value) ;
@@ -155,8 +168,9 @@ const char* CANFDMolinaroAnalyzerSettings::SaveSettings () {
 	SimpleArchive text_archive;
 
 	text_archive << mInputChannel;
-	text_archive << mBitRate;
+	text_archive << mArbitrationBitRate;
 	text_archive << mInverted;
+	text_archive << U32 (mProtocol) ;
 	text_archive << U32 (mSimulatorGeneratedAckSlot) ;
 	text_archive << U32 (mSimulatorGeneratedFrameType) ;
 	text_archive << U32 (mSimulatorGeneratedESISlot) ;

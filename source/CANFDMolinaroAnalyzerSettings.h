@@ -9,6 +9,13 @@
 //--------------------------------------------------------------------------------------------------
 
 typedef enum {
+  CANFD_ISO_PROTOCOL,
+  CANFD_NON_ISO_PROTOCOL
+} ProtocolSetting ;
+
+//--------------------------------------------------------------------------------------------------
+
+typedef enum {
   GENERATE_BIT_DOMINANT,
   GENERATE_BIT_RECESSIVE,
   GENERATE_BIT_RANDOMLY
@@ -42,7 +49,8 @@ public:
 
 
   Channel mInputChannel;
-  U32 mBitRate;
+
+  public: U32 arbitrationBitRate (void) const { return mArbitrationBitRate ; }
 
   public: bool inverted (void) const { return mInverted ; }
 
@@ -58,6 +66,10 @@ public:
    return mSimulatorGeneratedFrameType ;
   }
 
+  public: ProtocolSetting protocol (void) const {
+   return mProtocol ;
+  }
+
 protected:
   std::auto_ptr< AnalyzerSettingInterfaceChannel >  mInputChannelInterface;
   std::auto_ptr< AnalyzerSettingInterfaceInteger >  mBitRateInterface;
@@ -65,10 +77,13 @@ protected:
   std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorAckGenerationInterface ;
   std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorESIGenerationInterface ;
   std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorFrameTypeGenerationInterface ;
+  std::auto_ptr< AnalyzerSettingInterfaceNumberList > mProtocolInterface ;
 
+  U32 mArbitrationBitRate ;
   SimulatorGeneratedBit mSimulatorGeneratedAckSlot = GENERATE_BIT_DOMINANT ;
   SimulatorGeneratedBit mSimulatorGeneratedESISlot = GENERATE_BIT_DOMINANT ;
   SimulatorGeneratedFrameType mSimulatorGeneratedFrameType = GENERATE_ALL_FRAME_TYPES ;
+  ProtocolSetting mProtocol = CANFD_ISO_PROTOCOL ;
   bool mInverted = false ;
 };
 

@@ -48,8 +48,8 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
   private: U64 mStartOfFieldSampleNumber ;
 //--- CAN protocol
   private: typedef enum  {
-    IDLE, IDENTIFIER, CONTROL_BASE, CONTROL_EXTENDED, CONTROL_AFTER_R0, DATA, CRC15, CRC17, CRC21,
-    CRCDEL, ACK, ENDOFFRAME, INTERMISSION, DECODER_ERROR
+    IDLE, IDENTIFIER, CONTROL_BASE, CONTROL_EXTENDED, CONTROL_AFTER_R0, DATA, SBC,
+    CRC15, CRC17, CRC21, CRCDEL, ACK, ENDOFFRAME, INTERMISSION, DECODER_ERROR
   } FrameFieldEngineState ;
 
   private: FrameFieldEngineState mFrameFieldEngineState ;
@@ -60,12 +60,8 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
 
 //--- Received frame
   private: uint32_t mIdentifier ;
-  private: typedef enum {base, extended} FrameFormat ;
-  private: FrameFormat mFrameFormat ;
-  private: typedef enum {canData, remote, canfdData} FrameType ;
-  private: FrameType mFrameType ;
-  private: bool mBRS ;
-  private: bool mESI ;
+  private: U32 mSBCField ;
+  private: U32 mStuffBitCount ;
   private: U32 mDataCodeLength ;
   private: U8 mData [64] ;
   private: U16 mCRC15Accumulator ;
@@ -74,6 +70,12 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
   private: U32 mCRC17 ;
   private: U32 mCRC21Accumulator ;
   private: U32 mCRC21 ;
+  private: typedef enum {base, extended} FrameFormat ;
+  private: FrameFormat mFrameFormat ;
+  private: typedef enum {canData, remote, canfdData} FrameType ;
+  private: FrameType mFrameType ;
+  private: bool mBRS ;
+  private: bool mESI ;
 
 //---------------- CAN decoder methods
   private: void enterBit (const bool inBit, const U64 inSampleNumber) ;
@@ -94,6 +96,7 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
   private: void handle_CONTROL_EXTENDED_state (const bool inBit, const U64 inSampleNumber) ;
   private: void handle_CONTROL_AFTER_R0_state (const bool inBit, const U64 inSampleNumber) ;
   private: void handle_DATA_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_SBC_state (const bool inBit, const U64 inSampleNumber) ;
   private: void handle_CRC15_state (const bool inBit, const U64 inSampleNumber) ;
   private: void handle_CRC17_state (const bool inBit, const U64 inSampleNumber) ;
   private: void handle_CRC21_state (const bool inBit, const U64 inSampleNumber) ;

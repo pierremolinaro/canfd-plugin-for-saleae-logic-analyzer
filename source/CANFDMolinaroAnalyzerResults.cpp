@@ -85,6 +85,20 @@ void CANFDMolinaroAnalyzerResults::GenerateText (const Frame & inFrame,
       ioText << "ACK" ;
     }
     break ;
+  case SBC_FIELD_RESULT :
+    { const bool parityError = (inFrame.mData2 & 1) != 0 ;
+      const bool stuffBitCountError = (inFrame.mData2 >> 1) != inFrame.mData1 ;
+      if (inBubbleText || parityError || stuffBitCountError) {
+        ioText << "SBC: " << inFrame.mData1 ;
+        if (parityError && stuffBitCountError) {
+          ioText << " (error " << (inFrame.mData2 >> 1) << ", P)" ;
+        }else if (parityError) {
+          ioText << " (error P)" ;
+        }else if (stuffBitCountError) {
+          ioText << " (error " << (inFrame.mData2 >> 1) << ")" ;
+        }
+      }
+    } break ;
   case EOF_FIELD_RESULT :
     if (inBubbleText) {
       ioText << "EOF" ;

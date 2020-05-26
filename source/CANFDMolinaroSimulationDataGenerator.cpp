@@ -189,14 +189,10 @@ bool CANFrameBitsGenerator::bitAtIndex (const uint32_t inIndex) const {
 //  CANFD FRAME GENERATOR
 //--------------------------------------------------------------------------------------------------
 
-typedef enum {PROTOCOL_ISO, PROTOCOL_NON_ISO} ProtocolType ;
-
-//--------------------------------------------------------------------------------------------------
-
 class CANFDFrameBitsGenerator {
   public : CANFDFrameBitsGenerator (const uint32_t inIdentifier,
                                     const FrameFormat inFrameFormat,
-                                    const ProtocolType inProtocolType,
+                                    const ProtocolSetting inProtocolType,
                                     const uint8_t inDataLength,
                                     const uint8_t inData [64],
                                     const GeneratedBit inAckSlot,
@@ -231,7 +227,7 @@ class CANFDFrameBitsGenerator {
   private: uint8_t mStuffBitCount ;
   private: const uint8_t mDataLengthCode ;
   private: const FrameFormat mFrameFormat ;
-  private: const ProtocolType mProtocolType ;
+  private: const ProtocolSetting mProtocolType ;
   private: const GeneratedBit mAckSlot ;
 
   private: bool mLastBitValue ;
@@ -242,7 +238,7 @@ class CANFDFrameBitsGenerator {
 
 CANFDFrameBitsGenerator::CANFDFrameBitsGenerator (const uint32_t inIdentifier,
                                                   const FrameFormat inFrameFormat,
-                                                  const ProtocolType inProtocolType,
+                                                  const ProtocolSetting inProtocolType,
                                                   const uint8_t inDataLengthCode,
                                                   const uint8_t inData [64],
                                                   const GeneratedBit inAckSlot,
@@ -270,9 +266,9 @@ mConsecutiveBitCount (1) {
   }
 //--- Change CRC initial value according to ISO
   switch (mProtocolType) {
-  case PROTOCOL_NON_ISO :
+  case CANFD_NON_ISO_PROTOCOL :
     break ;
-  case PROTOCOL_ISO :
+  case CANFD_ISO_PROTOCOL :
     mCRCAccumulator17 = 1U << 16 ;
     mCRCAccumulator21 = 1U << 20 ;
     break ;
@@ -332,9 +328,9 @@ mConsecutiveBitCount (1) {
   }
 //--- Enter STUFF BIT COUNT
   switch (mProtocolType) {
-  case PROTOCOL_NON_ISO :
+  case CANFD_NON_ISO_PROTOCOL :
     break ;
-  case PROTOCOL_ISO :
+  case CANFD_ISO_PROTOCOL :
     { enterBitInFrame (!lastBit) ;
       const uint8_t GRAY_CODE_PARITY [8] = {0, 3, 6, 5, 12, 15, 10, 9} ;
       const uint8_t code = GRAY_CODE_PARITY [mStuffBitCount % 8] ;
@@ -499,10 +495,10 @@ U32 CANMolinaroSimulationDataGenerator::GenerateSimulationData (const U64 larges
 //--------------------------------------------------------------------------------------------------
 
 void CANMolinaroSimulationDataGenerator::CreateCANFrame () {
-  const U32 samples_per_bit = mSimulationSampleRateHz / mSettings->mBitRate;
+  const U32 samples_per_bit = mSimulationSampleRateHz / mSettings->arbitrationBitRate () ;
   const bool inverted = mSettings->inverted () ;
   const SimulatorGeneratedFrameType frameTypes = mSettings->generatedFrameType () ;
-  const ProtocolType protocol = PROTOCOL_NON_ISO ;
+  const ProtocolSetting protocol = mSettings->protocol () ;
 //--- Select Frame type to generate
   bool canfd_0_16 = false ;
   bool canfd_24_64 = false ;
