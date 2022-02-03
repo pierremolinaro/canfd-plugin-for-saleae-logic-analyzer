@@ -140,43 +140,18 @@ void DestroyAnalyzer (Analyzer* analyzer) {
 //  CAN FRAME DECODER
 //--------------------------------------------------------------------------------------------------
 
-// void CANFDMolinaroAnalyzer::enterBit (const bool inBit, const U64 inSampleNumber) {
-//   if (!mUnstuffingActive) {
-//     decodeFrameBit (inBit, inSampleNumber) ;
-//     mPreviousBit = inBit ;
-//   }else if ((mConsecutiveBitCountOfSamePolarity == 5) && (inBit != mPreviousBit)) {
-//     mStuffBitCount += 1 ; // Stuff bit - discarded
-//     addMark (inSampleNumber, AnalyzerResults::X);
-//     mConsecutiveBitCountOfSamePolarity = 1 ;
-//     mPreviousBit = inBit ;
-//     enterBitInCRC17 (inBit) ;
-//     enterBitInCRC21 (inBit) ;
-//   }else if ((mConsecutiveBitCountOfSamePolarity == 5) && (mPreviousBit == inBit)) { // Stuff Error
-//     enterInErrorMode (inSampleNumber) ;
-//     mConsecutiveBitCountOfSamePolarity += 1 ;
-//   }else if (mPreviousBit == inBit) {
-//     mConsecutiveBitCountOfSamePolarity += 1 ;
-//     decodeFrameBit (inBit, inSampleNumber) ;
-//     enterBitInCRC17 (inBit) ;
-//     enterBitInCRC21 (inBit) ;
-//   }else{
-//     mConsecutiveBitCountOfSamePolarity = 1 ;
-//     decodeFrameBit (inBit, inSampleNumber) ;
-//     mPreviousBit = inBit ;
-//     enterBitInCRC17 (inBit) ;
-//     enterBitInCRC21 (inBit) ;
-//   }
-// }
-
 void CANFDMolinaroAnalyzer::enterBit (const bool inBit, const U64 inSampleNumber) {
   if (!mUnstuffingActive) {
     decodeFrameBit (inBit, inSampleNumber) ;
+    mPreviousBit = inBit ;
   }else if ((mConsecutiveBitCountOfSamePolarity == 5) && (inBit != mPreviousBit)) {
    // Stuff bit - discarded
     addMark (inSampleNumber, AnalyzerResults::X);
     mConsecutiveBitCountOfSamePolarity = 1 ;
     mPreviousBit = inBit ;
     mStuffBitCount += 1 ;
+    enterBitInCRC17 (inBit) ;
+    enterBitInCRC21 (inBit) ;
   }else if ((mConsecutiveBitCountOfSamePolarity == 5) && (mPreviousBit == inBit)) { // Stuff Error
     addMark (inSampleNumber, AnalyzerResults::ErrorX);
     const U32 samplesPerBit = mSampleRateHz / mSettings->arbitrationBitRate () ;
@@ -185,10 +160,14 @@ void CANFDMolinaroAnalyzer::enterBit (const bool inBit, const U64 inSampleNumber
   }else if (mPreviousBit == inBit) {
     mConsecutiveBitCountOfSamePolarity += 1 ;
     decodeFrameBit (inBit, inSampleNumber) ;
+    enterBitInCRC17 (inBit) ;
+    enterBitInCRC21 (inBit) ;
   }else{
     mConsecutiveBitCountOfSamePolarity = 1 ;
     mPreviousBit = inBit ;
     decodeFrameBit (inBit, inSampleNumber) ;
+    enterBitInCRC17 (inBit) ;
+    enterBitInCRC21 (inBit) ;
   }
 }
 
@@ -254,16 +233,16 @@ void CANFDMolinaroAnalyzer::handle_IDLE_state (const bool inBit, const U64 inSam
   if (!inBit) {
     mUnstuffingActive = true ;
     mCRC15Accumulator = 0 ;
-//     switch (mSettings->protocol ()) {
-//     case CANFD_NON_ISO_PROTOCOL :
+    switch (mSettings->protocol ()) {
+    case CANFD_NON_ISO_PROTOCOL :
       mCRC17Accumulator = 0 ;
       mCRC21Accumulator = 0 ;
-//       break ;
-//     case CANFD_ISO_PROTOCOL :
+      break ;
+    case CANFD_ISO_PROTOCOL :
       mCRC17Accumulator = 1 << 16 ;
       mCRC21Accumulator = 1 << 20 ;
-//       break ;
-//     }
+      break ;
+    }
     mConsecutiveBitCountOfSamePolarity = 1 ;
     mPreviousBit = false ;
     enterBitInCRC15 (inBit) ;
@@ -441,7 +420,7 @@ void CANFDMolinaroAnalyzer::handle_DATA_state (const bool inBit, const U64 inSam
   addMark (inSampleNumber, AnalyzerResults::Dot);
   mData [mFieldBitIndex / 8] <<= 1 ;
   mData [mFieldBitIndex / 8] |= inBit ;
-  mFieldBitIndex ++ ;
+  mFieldBitIndex += 1 ;
   if ((mFieldBitIndex % 8) == 0) {
     const U32 dataIndex = (mFieldBitIndex - 1) / 8 ;
     addBubble (DATA_FIELD_RESULT, mData [dataIndex], dataIndex, inSampleNumber) ;
@@ -462,6 +441,22 @@ void CANFDMolinaroAnalyzer::handle_DATA_state (const bool inBit, const U64 inSam
       mCRC21 = mCRC21Accumulator ;
       mFrameFieldEngineState = FrameFieldEngineState::CRC21 ;
       mUnstuffingActive = false ;
+    }
+  }
+}
+
+//--------------------------------------------------------------------------------------------------
+
+void CANFDMolinaroAnalyzer::handle_CRC15_state (const bool inBit, const U64 inSampleNumber) {
+  enterBitInCRC15 (inBit) ;
+  addMark (inSampleNumber, AnalyzerResults::Dot);
+  mFieldBitIndex += 1 ;
+  if (mFieldBitIndex == 15) {
+    mFieldBitIndex = 0 ;
+    mFrameFieldEngineState = FrameFieldEngineState::CRCDEL ;
+    addBubble (CRC15_FIELD_RESULT, mCRC15, mCRC15Accumulator, inSampleNumber) ;
+    if (mCRC15Accumulator != 0) {
+      mFrameFieldEngineState = DECODER_ERROR ;
     }
   }
 }
@@ -498,32 +493,16 @@ void CANFDMolinaroAnalyzer::handle_SBC_state (const bool inBit, const U64 inSamp
       v >>= 1 ;
     }
     addMark (inSampleNumber, oneBitCountIsEven ? AnalyzerResults::Dot : AnalyzerResults::ErrorX) ;
-    mFieldBitIndex = 0 ;
     const U32 data2 = ((mStuffBitCount % 8) << 1) | !oneBitCountIsEven ;
     addBubble (SBC_FIELD_RESULT, suffBitCountMod8, data2, inSampleNumber) ;
     mUnstuffingActive = false ;
+    mFieldBitIndex = 0 ;
     if (mDataCodeLength <= 10) {
       mCRC17 = mCRC17Accumulator ;
       mFrameFieldEngineState = FrameFieldEngineState::CRC17 ;
     }else{
       mCRC21 = mCRC21Accumulator ;
       mFrameFieldEngineState = FrameFieldEngineState::CRC21 ;
-    }
-  }
-}
-
-//--------------------------------------------------------------------------------------------------
-
-void CANFDMolinaroAnalyzer::handle_CRC15_state (const bool inBit, const U64 inSampleNumber) {
-  enterBitInCRC15 (inBit) ;
-  addMark (inSampleNumber, AnalyzerResults::Dot);
-  mFieldBitIndex ++ ;
-  if (mFieldBitIndex == 15) {
-    mFieldBitIndex = 0 ;
-    mFrameFieldEngineState = FrameFieldEngineState::CRCDEL ;
-    addBubble (CRC15_FIELD_RESULT, mCRC15, mCRC15Accumulator, inSampleNumber) ;
-    if (mCRC15Accumulator != 0) {
-      mFrameFieldEngineState = DECODER_ERROR ;
     }
   }
 }
@@ -539,7 +518,7 @@ void CANFDMolinaroAnalyzer::handle_CRC17_state (const bool inBit, const U64 inSa
   }else{
     addMark (inSampleNumber, AnalyzerResults::X);
   }
-  mFieldBitIndex ++ ;
+  mFieldBitIndex += 1 ;
   if (mFieldBitIndex == 22) {
     mFieldBitIndex = 0 ;
     mDataBitRateActive = false ;

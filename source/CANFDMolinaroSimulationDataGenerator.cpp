@@ -564,9 +564,11 @@ void CANMolinaroSimulationDataGenerator::createCANFrame (const U32 inSamplesPerA
     extended = true ;
     break ;
   case GENERATE_ONLY_CANFD_BASE_20_64 :
+    canFD_frame = true ;
     canfd_24_64 = true ;
     break ;
   case GENERATE_ONLY_CANFD_EXTENDED_20_64 :
+    canFD_frame = true ;
     canfd_24_64 = true ;
     extended = true ;
     break ;
