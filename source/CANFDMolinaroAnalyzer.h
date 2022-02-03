@@ -18,34 +18,36 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
 
   public: CANFDMolinaroAnalyzer();
 
-	public: virtual ~CANFDMolinaroAnalyzer();
+  public: virtual ~CANFDMolinaroAnalyzer();
 
-	public: virtual void SetupResults();
+  public: virtual void SetupResults();
 
-	public: virtual void WorkerThread();
+  public: virtual void WorkerThread();
 
-	public: virtual U32 GenerateSimulationData (U64 newest_sample_requested,
+  public: virtual U32 GenerateSimulationData (U64 newest_sample_requested,
                                               U32 sample_rate,
                                               SimulationChannelDescriptor** simulation_channels);
-	public: virtual U32 GetMinimumSampleRateHz();
+  public: virtual U32 GetMinimumSampleRateHz () ;
 
-	public: virtual const char* GetAnalyzerName() const;
+  public: virtual const char* GetAnalyzerName() const ;
 
-	public: virtual bool NeedsRerun();
+  public: virtual bool NeedsRerun () ;
 
 //--- Protected properties
   protected: std::auto_ptr< CANFDMolinaroAnalyzerSettings > mSettings;
-	protected: std::auto_ptr< CANFDMolinaroAnalyzerResults > mResults;
-	protected: AnalyzerChannelData* mSerial;
+  protected: std::auto_ptr< CANFDMolinaroAnalyzerResults > mResults;
+  protected: AnalyzerChannelData* mSerial;
 
-	protected: CANMolinaroSimulationDataGenerator mSimulationDataGenerator;
- 	protected: bool mSimulationInitilized;
+  protected: CANMolinaroSimulationDataGenerator mSimulationDataGenerator;
+   protected: bool mSimulationInitilized;
 
-	//Serial analysis vars:
-	protected: U32 mSampleRateHz;
+  protected: U32 mSampleRateHz;
+
 
 //---------------- CAN decoder
   private: U64 mStartOfFieldSampleNumber ;
+  private: U64 mStartOfFrameSampleNumber ;
+
 //--- CAN protocol
   private: typedef enum  {
     IDLE, IDENTIFIER, CONTROL_BASE, CONTROL_EXTENDED, CONTROL_AFTER_R0, DATA, SBC,

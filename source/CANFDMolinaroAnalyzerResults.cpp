@@ -8,17 +8,16 @@
 
 //--------------------------------------------------------------------------------------------------
 
-CANFDMolinaroAnalyzerResults::CANFDMolinaroAnalyzerResults( CANFDMolinaroAnalyzer* analyzer, CANFDMolinaroAnalyzerSettings* settings )
-:  AnalyzerResults(),
-  mSettings( settings ),
-  mAnalyzer( analyzer )
-{
+CANFDMolinaroAnalyzerResults::CANFDMolinaroAnalyzerResults (CANFDMolinaroAnalyzer* analyzer,
+                                                            CANFDMolinaroAnalyzerSettings* settings ) :
+AnalyzerResults(),
+mSettings (settings),
+mAnalyzer (analyzer) {
 }
 
 //--------------------------------------------------------------------------------------------------
 
-CANFDMolinaroAnalyzerResults::~CANFDMolinaroAnalyzerResults()
-{
+CANFDMolinaroAnalyzerResults::~CANFDMolinaroAnalyzerResults () {
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -30,19 +29,29 @@ void CANFDMolinaroAnalyzerResults::GenerateText (const Frame & inFrame,
   char numberString [128] = "" ;
   switch (inFrame.mType) {
   case STANDARD_IDENTIFIER_FIELD_RESULT :
-    AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 12, numberString, 128);
+//    AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 12, numberString, 128);
+    snprintf (numberString, 128, "0x%03llX", inFrame.mData1) ;
     ioText << ((inFrame.mData2 == 0) ? "Std Remote idf: " : "Std Data idf: ") ;
     ioText << numberString ;
+    ioText << "\n" ;
     break ;
   case EXTENDED_IDENTIFIER_FIELD_RESULT :
-    AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 32, numberString, 128);
-    ioText << ((inFrame.mData2 == 0) ? "Extended Remote idf: " : "Extended Data idf: ") ;
+//     AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 32, numberString, 128);
+    snprintf (numberString, 128, "0x%08llX", inFrame.mData1) ;
+    ioText << ((inFrame.mData2 == 0) ? "Ext Remote idf: " : "Ext Data idf: ") ;
     ioText << numberString ;
+    ioText << "\n" ;
     break ;
   case CAN20B_CONTROL_FIELD_RESULT :
-   ioText << "Ctrl: " << inFrame.mData1 ;
+    if (!inBubbleText) {
+      ioText << "  " ;
+    }
+    ioText << "Ctrl: " << inFrame.mData1 << "\n" ;
     break ;
   case CANFD_CONTROL_FIELD_RESULT :
+    if (!inBubbleText) {
+      ioText << "  " ;
+    }
     ioText << "Ctrl: " << inFrame.mData1 << " (FDF" ;
     if ((inFrame.mData2 & 1) != 0) {
       ioText << ", BRS" ;
@@ -50,35 +59,51 @@ void CANFDMolinaroAnalyzerResults::GenerateText (const Frame & inFrame,
     if ((inFrame.mData2 & 2) != 0) {
       ioText << ", ESI" ;
     }
-    ioText << ")" ;
+    ioText << ")\n" ;
     break ;
   case DATA_FIELD_RESULT :
-    AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 8, numberString, 128);
-    ioText << "Data " << inFrame.mData2 << ": " << numberString ;
+    if (!inBubbleText) {
+      ioText << "  " ;
+    }
+//    AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 8, numberString, 128);
+    snprintf (numberString, 128, "0x%02llX", inFrame.mData1) ;
+    ioText << "D" << inFrame.mData2 << ": " << numberString << "\n" ;
     break ;
   case CRC15_FIELD_RESULT : // Data1: CRC, Data2: is 0 if CRC ok
-    AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 16, numberString, 128);
-    if (inFrame.mData2 != 0) {
-      ioText << "CRC15: " << numberString << " (error)" ;
-    }else if (inBubbleText) {
-      ioText << "CRC15: " << numberString ;
+    if (!inBubbleText) {
+      ioText << "  " ;
     }
+    snprintf (numberString, 128, "0x%04llX", inFrame.mData1) ;
+    ioText << "CRC15: " << numberString ;
+    // AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 16, numberString, 128);
+    if (inFrame.mData2 != 0) {
+      ioText << " (error)" ;
+    }
+    ioText << "\n" ;
     break ;
   case CRC17_FIELD_RESULT : // Data1: CRC, Data2: is 0 if CRC ok
-    AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 20, numberString, 128);
-    if (inFrame.mData2 != 0) {
-      ioText << "CRC17: " << numberString << " (error)" ;
-    }else if (inBubbleText) {
-      ioText << "CRC17: " << numberString ;
+    if (!inBubbleText) {
+      ioText << "  " ;
     }
+    // AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 20, numberString, 128);
+    snprintf (numberString, 128, "0x%05llX", inFrame.mData1) ;
+    ioText << "CRC17: " << numberString ;
+    if (inFrame.mData2 != 0) {
+      ioText << " (error)" ;
+    }
+    ioText << "\n" ;
     break ;
   case CRC21_FIELD_RESULT : // Data1: CRC, Data2: is 0 if CRC ok
-    AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 24, numberString, 128);
-    if (inFrame.mData2 != 0) {
-      ioText << "CRC21: " << numberString << " (error)" ;
-    }else if (inBubbleText) {
-      ioText << "CRC21: " << numberString ;
+    if (!inBubbleText) {
+      ioText << "  " ;
     }
+    // AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 24, numberString, 128);
+    snprintf (numberString, 128, "0x%06llX", inFrame.mData1) ;
+    ioText << "CRC21: " << numberString ;
+    if (inFrame.mData2 != 0) {
+      ioText << " (error)" ;
+    }
+    ioText << "\n" ;
     break ;
   case ACK_FIELD_RESULT :
     if (inBubbleText) {
@@ -88,29 +113,34 @@ void CANFDMolinaroAnalyzerResults::GenerateText (const Frame & inFrame,
   case SBC_FIELD_RESULT :
     { const bool parityError = (inFrame.mData2 & 1) != 0 ;
       const bool stuffBitCountError = (inFrame.mData2 >> 1) != inFrame.mData1 ;
-      if (inBubbleText || parityError || stuffBitCountError) {
-        ioText << "SBC: " << inFrame.mData1 ;
-        if (parityError && stuffBitCountError) {
-          ioText << " (error " << (inFrame.mData2 >> 1) << ", P)" ;
-        }else if (parityError) {
-          ioText << " (error P)" ;
-        }else if (stuffBitCountError) {
-          ioText << " (error " << (inFrame.mData2 >> 1) << ")" ;
-        }
+      if (!inBubbleText) {
+        ioText << "  " ;
       }
+      ioText << "SBC: " << inFrame.mData1 ;
+      if (parityError && stuffBitCountError) {
+        ioText << " (error " << (inFrame.mData2 >> 1) << ", P)" ;
+      }else if (parityError) {
+        ioText << " (error P)" ;
+      }else if (stuffBitCountError) {
+        ioText << " (error " << (inFrame.mData2 >> 1) << ")" ;
+      }
+      ioText << "\n" ;
     } break ;
   case EOF_FIELD_RESULT :
     if (inBubbleText) {
-      ioText << "EOF" ;
+      ioText << "EOF\n" ;
     }
     break ;
   case INTERMISSION_FIELD_RESULT :
     if (inBubbleText) {
-      ioText << "IFS" ;
+      ioText << "IFS\n" ;
     }
     break ;
   default :
-    ioText << "Error" ;
+    if (!inBubbleText) {
+      ioText << "  " ;
+    }
+    ioText << "Error\n" ;
     break ;
   }
 }
@@ -179,16 +209,14 @@ void CANFDMolinaroAnalyzerResults::GenerateExportFile( const char* file, Display
 //--------------------------------------------------------------------------------------------------
 
 
-void CANFDMolinaroAnalyzerResults::GeneratePacketTabularText( U64 packet_id, DisplayBase display_base )
-{
+void CANFDMolinaroAnalyzerResults::GeneratePacketTabularText (U64 packet_id, DisplayBase display_base) {
   //not supported
-
 }
 
 //--------------------------------------------------------------------------------------------------
 
-void CANFDMolinaroAnalyzerResults::GenerateTransactionTabularText( U64 transaction_id, DisplayBase display_base )
-{
+void CANFDMolinaroAnalyzerResults::GenerateTransactionTabularText (U64 transaction_id,
+                                                                   DisplayBase display_base) {
   //not supported
 }
 

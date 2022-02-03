@@ -7,11 +7,11 @@
 //--------------------------------------------------------------------------------------------------
 
 CANFDMolinaroAnalyzer::CANFDMolinaroAnalyzer () :
-Analyzer2(),
+Analyzer2 (),
 mSettings (new CANFDMolinaroAnalyzerSettings ()),
 mSimulationInitilized (false),
 mDataBitRateActive (false) {
-  SetAnalyzerSettings( mSettings.get() );
+  SetAnalyzerSettings (mSettings.get()) ;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -23,9 +23,9 @@ CANFDMolinaroAnalyzer::~CANFDMolinaroAnalyzer () {
 //--------------------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::SetupResults () {
-  mResults.reset( new CANFDMolinaroAnalyzerResults( this, mSettings.get() ) );
-  SetAnalyzerResults( mResults.get() );
-  mResults->AddChannelBubblesWillAppearOn( mSettings->mInputChannel );
+  mResults.reset (new CANFDMolinaroAnalyzerResults (this, mSettings.get())) ;
+  SetAnalyzerResults (mResults.get()) ;
+  mResults->AddChannelBubblesWillAppearOn (mSettings->mInputChannel) ;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -37,7 +37,6 @@ void CANFDMolinaroAnalyzer::WorkerThread () {
 //--- Sample settings
   const U32 samplesPerArbitrationBit = mSampleRateHz / mSettings->arbitrationBitRate () ;
   const U32 samplesPerDataBit = mSampleRateHz / mSettings->dataBitRate () ;
-  mDataBitRateActive = false ;
 //--- Synchronize to recessive level
   if (mSerial->GetBitState() == (inverted ? BIT_HIGH : BIT_LOW)) {
     mSerial->AdvanceToNextEdge () ;
@@ -54,14 +53,24 @@ void CANFDMolinaroAnalyzer::WorkerThread () {
       currentBitState ^= true ;
       const U64 start = mSerial->GetSampleNumber () ;
       const U64 nextEdge = mSerial->GetSampleOfNextEdge () ;
-      U64 currentSample = start ;
-      U64 samplesPerBit = mDataBitRateActive ? samplesPerDataBit : samplesPerArbitrationBit ;
-      while ((currentSample + samplesPerBit / 2) < nextEdge) {
-        currentSample += samplesPerBit / 2 ; // Advance to center of bit
-        enterBit (currentBitState, currentSample) ;
-        samplesPerBit = mDataBitRateActive ? samplesPerDataBit : samplesPerArbitrationBit ;
-        currentSample += samplesPerBit / 2 ; // Advance to start of next bit
+      const U64 bitCount = (nextEdge - start + samplesPerArbitrationBit / 2) / samplesPerArbitrationBit ;
+      for (U64 i=0 ; i<bitCount ; i++) {
+        enterBit (currentBitState, start + samplesPerArbitrationBit / 2 + i * samplesPerArbitrationBit) ;
       }
+
+//     do{
+//       mSerial->AdvanceToNextEdge () ;
+//       currentBitState ^= true ;
+//       const U64 start = mSerial->GetSampleNumber () ;
+//       const U64 nextEdge = mSerial->GetSampleOfNextEdge () ;
+//       U64 currentSample = start ;
+//       U64 samplesPerBit = mDataBitRateActive ? samplesPerDataBit : samplesPerArbitrationBit ;
+//       while ((currentSample + samplesPerBit / 2) < nextEdge) {
+//         currentSample += samplesPerBit / 2 ; // Advance to center of bit
+//         enterBit (currentBitState, currentSample) ;
+//         samplesPerBit = mDataBitRateActive ? samplesPerDataBit : samplesPerArbitrationBit ;
+//         currentSample += samplesPerBit / 2 ; // Advance to start of next bit
+//       }
 
 
 //       const U64 bitCount = (nextEdge - start + samplesPerArbitrationBit / 2) / samplesPerArbitrationBit ;
@@ -89,7 +98,9 @@ U32 CANFDMolinaroAnalyzer::GenerateSimulationData (U64 minimum_sample_index,
     mSimulationDataGenerator.Initialize( GetSimulationSampleRate(), mSettings.get() );
     mSimulationInitilized = true;
   }
-  return mSimulationDataGenerator.GenerateSimulationData( minimum_sample_index, device_sample_rate, simulation_channels );
+  return mSimulationDataGenerator.GenerateSimulationData (minimum_sample_index,
+                                                          device_sample_rate,
+                                                          simulation_channels) ;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -129,31 +140,55 @@ void DestroyAnalyzer (Analyzer* analyzer) {
 //  CAN FRAME DECODER
 //--------------------------------------------------------------------------------------------------
 
+// void CANFDMolinaroAnalyzer::enterBit (const bool inBit, const U64 inSampleNumber) {
+//   if (!mUnstuffingActive) {
+//     decodeFrameBit (inBit, inSampleNumber) ;
+//     mPreviousBit = inBit ;
+//   }else if ((mConsecutiveBitCountOfSamePolarity == 5) && (inBit != mPreviousBit)) {
+//     mStuffBitCount += 1 ; // Stuff bit - discarded
+//     addMark (inSampleNumber, AnalyzerResults::X);
+//     mConsecutiveBitCountOfSamePolarity = 1 ;
+//     mPreviousBit = inBit ;
+//     enterBitInCRC17 (inBit) ;
+//     enterBitInCRC21 (inBit) ;
+//   }else if ((mConsecutiveBitCountOfSamePolarity == 5) && (mPreviousBit == inBit)) { // Stuff Error
+//     enterInErrorMode (inSampleNumber) ;
+//     mConsecutiveBitCountOfSamePolarity += 1 ;
+//   }else if (mPreviousBit == inBit) {
+//     mConsecutiveBitCountOfSamePolarity += 1 ;
+//     decodeFrameBit (inBit, inSampleNumber) ;
+//     enterBitInCRC17 (inBit) ;
+//     enterBitInCRC21 (inBit) ;
+//   }else{
+//     mConsecutiveBitCountOfSamePolarity = 1 ;
+//     decodeFrameBit (inBit, inSampleNumber) ;
+//     mPreviousBit = inBit ;
+//     enterBitInCRC17 (inBit) ;
+//     enterBitInCRC21 (inBit) ;
+//   }
+// }
+
 void CANFDMolinaroAnalyzer::enterBit (const bool inBit, const U64 inSampleNumber) {
   if (!mUnstuffingActive) {
     decodeFrameBit (inBit, inSampleNumber) ;
-    mPreviousBit = inBit ;
   }else if ((mConsecutiveBitCountOfSamePolarity == 5) && (inBit != mPreviousBit)) {
-    mStuffBitCount += 1 ; // Stuff bit - discarded
+   // Stuff bit - discarded
     addMark (inSampleNumber, AnalyzerResults::X);
     mConsecutiveBitCountOfSamePolarity = 1 ;
     mPreviousBit = inBit ;
-    enterBitInCRC17 (inBit) ;
-    enterBitInCRC21 (inBit) ;
+    mStuffBitCount += 1 ;
   }else if ((mConsecutiveBitCountOfSamePolarity == 5) && (mPreviousBit == inBit)) { // Stuff Error
-    enterInErrorMode (inSampleNumber) ;
+    addMark (inSampleNumber, AnalyzerResults::ErrorX);
+    const U32 samplesPerBit = mSampleRateHz / mSettings->arbitrationBitRate () ;
+    enterInErrorMode (inSampleNumber + samplesPerBit / 2) ;
     mConsecutiveBitCountOfSamePolarity += 1 ;
   }else if (mPreviousBit == inBit) {
     mConsecutiveBitCountOfSamePolarity += 1 ;
     decodeFrameBit (inBit, inSampleNumber) ;
-    enterBitInCRC17 (inBit) ;
-    enterBitInCRC21 (inBit) ;
   }else{
     mConsecutiveBitCountOfSamePolarity = 1 ;
-    decodeFrameBit (inBit, inSampleNumber) ;
     mPreviousBit = inBit ;
-    enterBitInCRC17 (inBit) ;
-    enterBitInCRC21 (inBit) ;
+    decodeFrameBit (inBit, inSampleNumber) ;
   }
 }
 
@@ -219,16 +254,16 @@ void CANFDMolinaroAnalyzer::handle_IDLE_state (const bool inBit, const U64 inSam
   if (!inBit) {
     mUnstuffingActive = true ;
     mCRC15Accumulator = 0 ;
-    switch (mSettings->protocol ()) {
-    case CANFD_NON_ISO_PROTOCOL :
+//     switch (mSettings->protocol ()) {
+//     case CANFD_NON_ISO_PROTOCOL :
       mCRC17Accumulator = 0 ;
       mCRC21Accumulator = 0 ;
-      break ;
-    case CANFD_ISO_PROTOCOL :
+//       break ;
+//     case CANFD_ISO_PROTOCOL :
       mCRC17Accumulator = 1 << 16 ;
       mCRC21Accumulator = 1 << 20 ;
-      break ;
-    }
+//       break ;
+//     }
     mConsecutiveBitCountOfSamePolarity = 1 ;
     mPreviousBit = false ;
     enterBitInCRC15 (inBit) ;
@@ -241,6 +276,7 @@ void CANFDMolinaroAnalyzer::handle_IDLE_state (const bool inBit, const U64 inSam
     mFrameFieldEngineState = FrameFieldEngineState::IDENTIFIER ;
     const U32 samplesPerArbitrationBit = mSampleRateHz / mSettings->arbitrationBitRate () ;
     mStartOfFieldSampleNumber = inSampleNumber + samplesPerArbitrationBit / 2 ;
+    mStartOfFrameSampleNumber = inSampleNumber ;
   }
 }
 
@@ -486,6 +522,9 @@ void CANFDMolinaroAnalyzer::handle_CRC15_state (const bool inBit, const U64 inSa
     mFieldBitIndex = 0 ;
     mFrameFieldEngineState = FrameFieldEngineState::CRCDEL ;
     addBubble (CRC15_FIELD_RESULT, mCRC15, mCRC15Accumulator, inSampleNumber) ;
+    if (mCRC15Accumulator != 0) {
+      mFrameFieldEngineState = DECODER_ERROR ;
+    }
   }
 }
 
