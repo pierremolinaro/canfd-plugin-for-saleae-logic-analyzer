@@ -47,6 +47,7 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
 //---------------- CAN decoder
   private: U64 mStartOfFieldSampleNumber ;
   private: U64 mStartOfFrameSampleNumber ;
+  private: U32 mCurrentSamplesPerBit ;
 
 //--- CAN protocol
   private: typedef enum  {
@@ -78,7 +79,6 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
   private: FrameType mFrameType ;
   private: bool mBRS ;
   private: bool mESI ;
-  private: bool mDataBitRateActive ;
 
 //---------------- CAN decoder methods
   private: void enterBit (const bool inBit, const U64 inSampleNumber) ;

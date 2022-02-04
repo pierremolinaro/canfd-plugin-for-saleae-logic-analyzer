@@ -310,7 +310,7 @@ mConsecutiveBitCount (1) {
   enterBitComputeCRCAppendStuff (true, false) ; // FDF
   enterBitComputeCRCAppendStuff (false, false) ; // R0
   const bool dataBitRate = inBSR == RECESSIVE_BIT ;
-  enterBitComputeCRCAppendStuff (dataBitRate, false) ; // BRS
+  enterBitComputeCRCAppendStuff (dataBitRate, dataBitRate) ; // BRS
   switch (inESISlot) {
   case DOMINANT_BIT:
     enterBitComputeCRCAppendStuff (false, dataBitRate) ; // ESI
@@ -322,7 +322,11 @@ mConsecutiveBitCount (1) {
   enterBitComputeCRCAppendStuff ((mDataLengthCode & 8) != 0, dataBitRate) ;
   enterBitComputeCRCAppendStuff ((mDataLengthCode & 4) != 0, dataBitRate) ;
   enterBitComputeCRCAppendStuff ((mDataLengthCode & 2) != 0, dataBitRate) ;
-  enterBitComputeCRCAppendStuff ((mDataLengthCode & 1) != 0, dataBitRate) ;
+  if (dataByteCount == 0) {
+   enterBitInFrameComputeCRC ((mDataLengthCode & 1) != 0, dataBitRate) ;
+  }else{
+   enterBitComputeCRCAppendStuff ((mDataLengthCode & 1) != 0, dataBitRate) ;
+  }
 //--- Enter DATA
   bool lastBit = mLastBitValue ;
   for (uint8_t dataIdx = 0 ; dataIdx < dataByteCount ; dataIdx ++) {
@@ -639,12 +643,18 @@ void CANMolinaroSimulationDataGenerator::createCANFD_Frame (const U32 inSamplesP
   }
   const ProtocolSetting protocol = mSettings->protocol () ;
   const CANFDFrameBitsGenerator frame (identifier, format, protocol, dataLengthCode, bsr, data, inAck, esi) ;
-//--- Now, send frame
+//--- Now, send FD frame
+  bool bitRateIsDataBitRate = false ;
   for (U32 i=0 ; i < frame.frameLength () ; i++) {
     const bool bit = frame.bitAtIndex (i) ^ inInverted ;
     const bool dataBitRate = frame.dataBitRateAtIndex (i) ;
     mSerialSimulationData.TransitionIfNeeded (bit ? BIT_HIGH : BIT_LOW) ;
-    mSerialSimulationData.Advance (dataBitRate ? inSamplesPerDataBit : inSamplesPerArbitrationBit) ;
+    if (bitRateIsDataBitRate == dataBitRate) {
+      mSerialSimulationData.Advance (dataBitRate ? inSamplesPerDataBit : inSamplesPerArbitrationBit) ;
+    }else{
+      mSerialSimulationData.Advance ((inSamplesPerDataBit + inSamplesPerArbitrationBit) / 2) ;
+    }
+    bitRateIsDataBitRate = dataBitRate ;
   }
 }
 
