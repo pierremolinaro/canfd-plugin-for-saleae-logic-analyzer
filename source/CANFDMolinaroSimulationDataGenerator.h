@@ -32,7 +32,7 @@ protected:
 //https://stackoverflow.com/questions/15500621/c-c-algorithm-to-produce-same-pseudo-random-number-sequences-from-same-seed-on
   protected: U32 mSeed ;
   protected: U32 pseudoRandomValue (void) {
-    mSeed = 8253729 * mSeed + 2396403 ;
+    mSeed = 8253729U * mSeed + 2396403U ;
     return mSeed ;
   }
 

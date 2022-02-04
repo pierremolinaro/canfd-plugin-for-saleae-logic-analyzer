@@ -76,25 +76,30 @@ public:
    return mProtocol ;
   }
 
-protected:
-  std::auto_ptr< AnalyzerSettingInterfaceChannel >  mInputChannelInterface;
-  std::auto_ptr< AnalyzerSettingInterfaceInteger >  mArbitrationBitRateInterface;
-  std::auto_ptr< AnalyzerSettingInterfaceInteger >  mDataBitRateInterface;
-  std::auto_ptr< AnalyzerSettingInterfaceNumberList > mCanChannelInvertedInterface ;
-  std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorAckGenerationInterface ;
-  std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorESIGenerationInterface ;
-  std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorBSRGenerationInterface ;
-  std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorFrameTypeGenerationInterface ;
-  std::auto_ptr< AnalyzerSettingInterfaceNumberList > mProtocolInterface ;
+  public: U32 simulatorRandomSeed (void) const {
+   return mSimulatorRandomSeed ;
+  }
 
-  U32 mArbitrationBitRate ;
-  U32 mDataBitRate ;
-  SimulatorGeneratedBit mSimulatorGeneratedAckSlot = GENERATE_BIT_DOMINANT ;
-  SimulatorGeneratedBit mSimulatorGeneratedESISlot = GENERATE_BIT_DOMINANT ;
-  SimulatorGeneratedBit mSimulatorGeneratedBSRSlot = GENERATE_BIT_DOMINANT ;
-  SimulatorGeneratedFrameType mSimulatorGeneratedFrameType = GENERATE_ALL_FRAME_TYPES ;
-  ProtocolSetting mProtocol = CANFD_ISO_PROTOCOL ;
-  bool mInverted = false ;
+  protected: std::auto_ptr< AnalyzerSettingInterfaceChannel >  mInputChannelInterface;
+  protected: std::auto_ptr< AnalyzerSettingInterfaceInteger > mArbitrationBitRateInterface;
+  protected: std::auto_ptr< AnalyzerSettingInterfaceInteger > mDataBitRateInterface;
+  protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mCanChannelInvertedInterface ;
+  protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorAckGenerationInterface ;
+  protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorESIGenerationInterface ;
+  protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorBSRGenerationInterface ;
+  protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorFrameTypeGenerationInterface ;
+  protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mProtocolInterface ;
+  protected: std::auto_ptr< AnalyzerSettingInterfaceInteger > mSimulatorRandomSeedInterface ;
+
+  protected: U32 mArbitrationBitRate ;
+  protected: U32 mDataBitRate ;
+  protected: U32 mSimulatorRandomSeed ;
+  protected: SimulatorGeneratedBit mSimulatorGeneratedAckSlot = GENERATE_BIT_DOMINANT ;
+  protected: SimulatorGeneratedBit mSimulatorGeneratedESISlot = GENERATE_BIT_DOMINANT ;
+  protected: SimulatorGeneratedBit mSimulatorGeneratedBSRSlot = GENERATE_BIT_DOMINANT ;
+  protected: SimulatorGeneratedFrameType mSimulatorGeneratedFrameType = GENERATE_ALL_FRAME_TYPES ;
+  protected: ProtocolSetting mProtocol = CANFD_ISO_PROTOCOL ;
+  protected: bool mInverted = false ;
 };
 
 //--------------------------------------------------------------------------------------------------

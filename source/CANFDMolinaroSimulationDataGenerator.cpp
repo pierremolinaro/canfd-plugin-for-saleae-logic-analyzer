@@ -513,7 +513,7 @@ U32 CANMolinaroSimulationDataGenerator::GenerateSimulationData (const U64 larges
   );
 
  //--- Random Seed
-  mSeed = 0 ; // mSettings->simulatorRandomSeed ()) ;
+  mSeed = mSettings->simulatorRandomSeed () ;
 
 //--- Let's move forward for 11 recessive bits
   const U32 samplesPerArbitrationBitRate = mSimulationSampleRateHz / mSettings->arbitrationBitRate () ;

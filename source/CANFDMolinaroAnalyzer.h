@@ -4,6 +4,7 @@
 //--------------------------------------------------------------------------------------------------
 
 #include <Analyzer.h>
+#include <AnalyzerResults.h>
 #include "CANFDMolinaroAnalyzerResults.h"
 #include "CANFDMolinaroSimulationDataGenerator.h"
 
@@ -79,6 +80,7 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
   private: FrameType mFrameType ;
   private: bool mBRS ;
   private: bool mESI ;
+  private: AnalyzerResults::MarkerType mMarkerTypeForDataAndCRC ;
 
 //---------------- CAN decoder methods
   private: void enterBit (const bool inBit, const U64 inSampleNumber) ;

@@ -20,6 +20,13 @@ mDataBitRate (500 * 1000) {
   mArbitrationBitRateInterface->SetMin (1) ;
   mArbitrationBitRateInterface->SetInteger (mArbitrationBitRate) ;
 
+//--- Simulator random Seed
+  mSimulatorRandomSeedInterface.reset (new AnalyzerSettingInterfaceInteger ()) ;
+  mSimulatorRandomSeedInterface->SetTitleAndTooltip ("Simulator Random Seed", "") ;
+  mSimulatorRandomSeedInterface->SetMax (1 * 1000 * 1000) ;
+  mSimulatorRandomSeedInterface->SetMin (0) ;
+  mSimulatorRandomSeedInterface->SetInteger (mSimulatorRandomSeed) ;
+
 //--- Data Bit Rate
   mDataBitRateInterface.reset (new AnalyzerSettingInterfaceInteger ()) ;
   mDataBitRateInterface->SetTitleAndTooltip ("CAN Data Bit Rate (bit/s)",
@@ -75,10 +82,10 @@ mDataBitRate (500 * 1000) {
   mSimulatorESIGenerationInterface.reset (new AnalyzerSettingInterfaceNumberList ()) ;
   mSimulatorESIGenerationInterface->SetTitleAndTooltip ("Simulator ESI generated level", "");
   mSimulatorESIGenerationInterface->AddNumber (0.0,
-                                               "Dominant",
+                                               "Dominant (means the sender is error active)",
                                                "Dominant means the sender is error active") ;
   mSimulatorESIGenerationInterface->AddNumber (1.0,
-                                               "Recessive",
+                                               "Recessive (means the sender is error passive)",
                                                "Recessive means the sender is error passive") ;
   mSimulatorESIGenerationInterface->AddNumber (2.0,
                                                "Random",
@@ -103,6 +110,7 @@ mDataBitRate (500 * 1000) {
   AddInterface (mArbitrationBitRateInterface.get ());
   AddInterface (mDataBitRateInterface.get ());
   AddInterface (mCanChannelInvertedInterface.get ());
+  AddInterface (mSimulatorRandomSeedInterface.get ());
   AddInterface (mProtocolInterface.get ());
   AddInterface (mSimulatorAckGenerationInterface.get ());
   AddInterface (mSimulatorFrameTypeGenerationInterface.get ());
@@ -128,7 +136,7 @@ bool CANFDMolinaroAnalyzerSettings::SetSettingsFromInterfaces () {
   mInputChannel = mInputChannelInterface->GetChannel();
 
   mArbitrationBitRate = mArbitrationBitRateInterface->GetInteger();
-
+  mSimulatorRandomSeed = mSimulatorRandomSeedInterface->GetInteger () ;
   mDataBitRate = mDataBitRateInterface->GetInteger();
 
   mInverted = U32 (mCanChannelInvertedInterface->GetNumber ()) != 0 ;
@@ -157,6 +165,7 @@ bool CANFDMolinaroAnalyzerSettings::SetSettingsFromInterfaces () {
 
 void CANFDMolinaroAnalyzerSettings::UpdateInterfacesFromSettings () {
   mInputChannelInterface->SetChannel (mInputChannel) ;
+  mSimulatorRandomSeedInterface->SetInteger (mSimulatorRandomSeed) ;
   mArbitrationBitRateInterface->SetInteger (mArbitrationBitRate) ;
   mDataBitRateInterface->SetInteger (mDataBitRate) ;
   mCanChannelInvertedInterface->SetNumber (double (mInverted)) ;

@@ -237,6 +237,7 @@ void CANFDMolinaroAnalyzer::handle_IDLE_state (const bool inBit, const U64 inSam
     mCurrentSamplesPerBit = mSampleRateHz / mSettings->arbitrationBitRate () ;
     mStartOfFieldSampleNumber = inSampleNumber + mCurrentSamplesPerBit / 2 ;
     mStartOfFrameSampleNumber = inSampleNumber ;
+    mMarkerTypeForDataAndCRC = AnalyzerResults::Dot ;
   }
 }
 
@@ -350,6 +351,7 @@ void CANFDMolinaroAnalyzer::handle_CONTROL_AFTER_R0_state (const bool inBit, con
         const U32 dataBitRate = mSampleRateHz / mSettings->dataBitRate () ;
         addMark (inSampleNumber - (mCurrentSamplesPerBit - dataBitRate) / 4, AnalyzerResults::UpArrow) ;
         mCurrentSamplesPerBit = dataBitRate ;
+        mMarkerTypeForDataAndCRC = AnalyzerResults::Square ;
       }else{
         addMark (inSampleNumber, AnalyzerResults::DownArrow) ;
       }
@@ -357,7 +359,7 @@ void CANFDMolinaroAnalyzer::handle_CONTROL_AFTER_R0_state (const bool inBit, con
       addMark (inSampleNumber, inBit ? AnalyzerResults::UpArrow : AnalyzerResults::DownArrow) ;
       mESI = inBit ;
     }else{
-      addMark (inSampleNumber, AnalyzerResults::Dot);
+      addMark (inSampleNumber, mMarkerTypeForDataAndCRC) ;
       mDataCodeLength <<= 1 ;
       mDataCodeLength |= inBit ;
       if (mFieldBitIndex == 6) {
@@ -377,7 +379,7 @@ void CANFDMolinaroAnalyzer::handle_CONTROL_AFTER_R0_state (const bool inBit, con
       }
     }
   }else{ // Base frame
-    addMark (inSampleNumber, AnalyzerResults::Dot);
+    addMark (inSampleNumber, mMarkerTypeForDataAndCRC);
     mDataCodeLength <<= 1 ;
     mDataCodeLength |= inBit ;
     if (mFieldBitIndex == 4) {
@@ -402,7 +404,7 @@ void CANFDMolinaroAnalyzer::handle_CONTROL_AFTER_R0_state (const bool inBit, con
 
 void CANFDMolinaroAnalyzer::handle_DATA_state (const bool inBit, const U64 inSampleNumber) {
   enterBitInCRC15 (inBit) ;
-  addMark (inSampleNumber, AnalyzerResults::Dot);
+  addMark (inSampleNumber, mMarkerTypeForDataAndCRC);
   mData [mFieldBitIndex / 8] <<= 1 ;
   mData [mFieldBitIndex / 8] |= inBit ;
   mFieldBitIndex += 1 ;
@@ -434,7 +436,7 @@ void CANFDMolinaroAnalyzer::handle_DATA_state (const bool inBit, const U64 inSam
 
 void CANFDMolinaroAnalyzer::handle_CRC15_state (const bool inBit, const U64 inSampleNumber) {
   enterBitInCRC15 (inBit) ;
-  addMark (inSampleNumber, AnalyzerResults::Dot);
+  addMark (inSampleNumber, mMarkerTypeForDataAndCRC);
   mFieldBitIndex += 1 ;
   if (mFieldBitIndex == 15) {
     mFieldBitIndex = 0 ;
@@ -462,7 +464,7 @@ void CANFDMolinaroAnalyzer::handle_SBC_state (const bool inBit, const U64 inSamp
     enterBitInCRC21 (inBit) ;
     mSBCField <<= 1 ;
     mSBCField |= inBit ;
-    addMark (inSampleNumber, AnalyzerResults::Dot);
+    addMark (inSampleNumber, mMarkerTypeForDataAndCRC);
   }else{ // Parity bit
     enterBitInCRC17 (inBit) ;
     enterBitInCRC21 (inBit) ;
@@ -497,7 +499,7 @@ void CANFDMolinaroAnalyzer::handle_SBC_state (const bool inBit, const U64 inSamp
 void CANFDMolinaroAnalyzer::handle_CRC17_state (const bool inBit, const U64 inSampleNumber) {
   if ((mFieldBitIndex % 5) != 0) {
     enterBitInCRC17 (inBit) ;
-    addMark (inSampleNumber, AnalyzerResults::Dot);
+    addMark (inSampleNumber, mMarkerTypeForDataAndCRC);
   }else if (inBit == mPreviousBit) {
     enterInErrorMode (inSampleNumber) ;
   }else{
@@ -516,7 +518,7 @@ void CANFDMolinaroAnalyzer::handle_CRC17_state (const bool inBit, const U64 inSa
 void CANFDMolinaroAnalyzer::handle_CRC21_state (const bool inBit, const U64 inSampleNumber) {
   if ((mFieldBitIndex % 5) != 0) {
     enterBitInCRC21 (inBit) ;
-    addMark (inSampleNumber, AnalyzerResults::Dot);
+    addMark (inSampleNumber, mMarkerTypeForDataAndCRC);
   }else if (inBit == mPreviousBit) {
     enterInErrorMode (inSampleNumber) ;
   }else{
@@ -550,7 +552,7 @@ void CANFDMolinaroAnalyzer::handle_CRCDEL_state (const bool inBit, const U64 inS
 void CANFDMolinaroAnalyzer::handle_ACK_state (const bool inBit, const U64 inSampleNumber) {
   mFieldBitIndex ++ ;
   if (mFieldBitIndex == 1) { // ACK SLOT
-    addMark (inSampleNumber, inBit ? AnalyzerResults::ErrorSquare : AnalyzerResults::Square);
+    addMark (inSampleNumber, inBit ? AnalyzerResults::ErrorSquare : AnalyzerResults::Dot);
   }else{ // ACK DELIMITER
     addBubble (ACK_FIELD_RESULT, 0, 0, inSampleNumber) ;
     if (inBit) {
