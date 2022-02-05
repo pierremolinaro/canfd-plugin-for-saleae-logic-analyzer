@@ -644,17 +644,29 @@ void CANMolinaroSimulationDataGenerator::createCANFD_Frame (const U32 inSamplesP
   const ProtocolSetting protocol = mSettings->protocol () ;
   const CANFDFrameBitsGenerator frame (identifier, format, protocol, dataLengthCode, bsr, data, inAck, esi) ;
 //--- Now, send FD frame
-  bool bitRateIsDataBitRate = false ;
+  bool previousBitHasDataBitRate = false ;
   for (U32 i=0 ; i < frame.frameLength () ; i++) {
     const bool bit = frame.bitAtIndex (i) ^ inInverted ;
-    const bool dataBitRate = frame.dataBitRateAtIndex (i) ;
+    const bool currentBitHasDataBitRate = frame.dataBitRateAtIndex (i) ;
     mSerialSimulationData.TransitionIfNeeded (bit ? BIT_HIGH : BIT_LOW) ;
-    if (bitRateIsDataBitRate == dataBitRate) {
-      mSerialSimulationData.Advance (dataBitRate ? inSamplesPerDataBit : inSamplesPerArbitrationBit) ;
-    }else{
-      mSerialSimulationData.Advance ((inSamplesPerDataBit + inSamplesPerArbitrationBit) / 2) ;
+    if (previousBitHasDataBitRate == currentBitHasDataBitRate) {
+      mSerialSimulationData.Advance (currentBitHasDataBitRate ? inSamplesPerDataBit : inSamplesPerArbitrationBit) ;
+    }else if (currentBitHasDataBitRate && !previousBitHasDataBitRate) { // BSR bit
+      const U64 BSRsamplesX100 =
+        (100 - mSettings->arbitrationSegment2 ()) * inSamplesPerArbitrationBit
+      +
+        mSettings->dataSegment2 () * inSamplesPerDataBit
+      ;
+      mSerialSimulationData.Advance (BSRsamplesX100 / 100) ;
+    }else{ // CRCDEL bit
+      const U64 CRCDELsamplesX100 =
+        (100 - mSettings->dataSegment2 ()) * inSamplesPerDataBit
+      +
+        mSettings->arbitrationSegment2 () * inSamplesPerArbitrationBit
+      ;
+      mSerialSimulationData.Advance (CRCDELsamplesX100 / 100) ;
     }
-    bitRateIsDataBitRate = dataBitRate ;
+    previousBitHasDataBitRate = currentBitHasDataBitRate ;
   }
 }
 

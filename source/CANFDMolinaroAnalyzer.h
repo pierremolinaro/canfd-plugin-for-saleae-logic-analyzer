@@ -83,33 +83,33 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
   private: AnalyzerResults::MarkerType mMarkerTypeForDataAndCRC ;
 
 //---------------- CAN decoder methods
-  private: void enterBit (const bool inBit, const U64 inSampleNumber) ;
-  private: void decodeFrameBit (const bool inBit, const U64 inSampleNumber) ;
+  private: void enterBit (const bool inBit, U64 & ioBitCenterSampleNumber) ;
+  private: void decodeFrameBit (const bool inBit, U64 & ioBitCenterSampleNumber) ;
   private: void enterBitInCRC15 (const bool inBit) ;
   private: void enterBitInCRC17 (const bool inBit) ;
   private: void enterBitInCRC21 (const bool inBit) ;
-  private: void addMark (const U64 inSampleNumber, const AnalyzerResults::MarkerType inMarker) ;
+  private: void addMark (const U64 inBitCenterSampleNumber, const AnalyzerResults::MarkerType inMarker) ;
   private: void addBubble (const U8 inBubbleType,
                            const U64 inData1,
                            const U64 inData2,
                            const U64 inEndSampleNumber) ;
-  private: void enterInErrorMode (const U64 inSampleNumber) ;
+  private: void enterInErrorMode (const U64 inBitCenterSampleNumber) ;
 
-  private: void handle_IDLE_state (const bool inBit, const U64 inSampleNumber) ;
-  private: void handle_IDENTIFIER_state (const bool inBit, const U64 inSampleNumber) ;
-  private: void handle_CONTROL_BASE_state (const bool inBit, const U64 inSampleNumber) ;
-  private: void handle_CONTROL_EXTENDED_state (const bool inBit, const U64 inSampleNumber) ;
-  private: void handle_CONTROL_AFTER_R0_state (const bool inBit, const U64 inSampleNumber) ;
-  private: void handle_DATA_state (const bool inBit, const U64 inSampleNumber) ;
-  private: void handle_SBC_state (const bool inBit, const U64 inSampleNumber) ;
-  private: void handle_CRC15_state (const bool inBit, const U64 inSampleNumber) ;
-  private: void handle_CRC17_state (const bool inBit, const U64 inSampleNumber) ;
-  private: void handle_CRC21_state (const bool inBit, const U64 inSampleNumber) ;
-  private: void handle_CRCDEL_state (const bool inBit, const U64 inSampleNumber) ;
-  private: void handle_ACK_state (const bool inBit, const U64 inSampleNumber) ;
-  private: void handle_ENDOFFRAME_state (const bool inBit, const U64 inSampleNumber) ;
-  private: void handle_INTERMISSION_state (const bool inBit, const U64 inSampleNumber) ;
-  private: void handle_DECODER_ERROR_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_IDLE_state (const bool inBit, const U64 inBitCenterSampleNumber) ;
+  private: void handle_IDENTIFIER_state (const bool inBit, const U64 inBitCenterSampleNumber) ;
+  private: void handle_CONTROL_BASE_state (const bool inBit, const U64 inBitCenterSampleNumber) ;
+  private: void handle_CONTROL_EXTENDED_state (const bool inBit, const U64 inBitCenterSampleNumber) ;
+  private: void handle_CONTROL_AFTER_R0_state (const bool inBit, U64 & ioBitCenterSampleNumber) ;
+  private: void handle_DATA_state (const bool inBit, const U64 inBitCenterSampleNumber) ;
+  private: void handle_SBC_state (const bool inBit, const U64 inBitCenterSampleNumber) ;
+  private: void handle_CRC15_state (const bool inBit, const U64 inBitCenterSampleNumber) ;
+  private: void handle_CRC17_state (const bool inBit, const U64 inBitCenterSampleNumber) ;
+  private: void handle_CRC21_state (const bool inBit, const U64 inBitCenterSampleNumber) ;
+  private: void handle_CRCDEL_state (const bool inBit, U64 & ioBitCenterSampleNumber) ;
+  private: void handle_ACK_state (const bool inBit, const U64 inBitCenterSampleNumber) ;
+  private: void handle_ENDOFFRAME_state (const bool inBit, const U64 inBitCenterSampleNumber) ;
+  private: void handle_INTERMISSION_state (const bool inBit, const U64 inBitCenterSampleNumber) ;
+  private: void handle_DECODER_ERROR_state (const bool inBit, const U64 inBitCenterSampleNumber) ;
 } ;
 
 //--------------------------------------------------------------------------------------------------

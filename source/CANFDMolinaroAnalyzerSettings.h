@@ -80,20 +80,32 @@ public:
    return mSimulatorRandomSeed ;
   }
 
-  protected: std::auto_ptr< AnalyzerSettingInterfaceChannel >  mInputChannelInterface;
-  protected: std::auto_ptr< AnalyzerSettingInterfaceInteger > mArbitrationBitRateInterface;
-  protected: std::auto_ptr< AnalyzerSettingInterfaceInteger > mDataBitRateInterface;
-  protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mCanChannelInvertedInterface ;
-  protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorAckGenerationInterface ;
-  protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorESIGenerationInterface ;
-  protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorBSRGenerationInterface ;
-  protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorFrameTypeGenerationInterface ;
-  protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mProtocolInterface ;
-  protected: std::auto_ptr< AnalyzerSettingInterfaceInteger > mSimulatorRandomSeedInterface ;
+  public: U32 arbitrationSegment2 (void) const {
+   return mArbitrationSegment2 ;
+  }
+
+  public: U32 dataSegment2 (void) const {
+   return mDataSegment2 ;
+  }
+
+  protected: std::auto_ptr <AnalyzerSettingInterfaceChannel> mInputChannelInterface ;
+  protected: std::auto_ptr <AnalyzerSettingInterfaceInteger> mArbitrationBitRateInterface ;
+  protected: std::auto_ptr <AnalyzerSettingInterfaceInteger> mDataBitRateInterface ;
+  protected: std::auto_ptr <AnalyzerSettingInterfaceInteger> mArbitrationSegment2Interface ;
+  protected: std::auto_ptr <AnalyzerSettingInterfaceInteger> mDataSegment2Interface ;
+  protected: std::auto_ptr <AnalyzerSettingInterfaceNumberList> mCanChannelInvertedInterface ;
+  protected: std::auto_ptr <AnalyzerSettingInterfaceNumberList> mSimulatorAckGenerationInterface ;
+  protected: std::auto_ptr <AnalyzerSettingInterfaceNumberList> mSimulatorESIGenerationInterface ;
+  protected: std::auto_ptr <AnalyzerSettingInterfaceNumberList> mSimulatorBSRGenerationInterface ;
+  protected: std::auto_ptr <AnalyzerSettingInterfaceNumberList> mSimulatorFrameTypeGenerationInterface ;
+  protected: std::auto_ptr <AnalyzerSettingInterfaceNumberList> mProtocolInterface ;
+  protected: std::auto_ptr <AnalyzerSettingInterfaceInteger> mSimulatorRandomSeedInterface ;
 
   protected: U32 mArbitrationBitRate ;
   protected: U32 mDataBitRate ;
   protected: U32 mSimulatorRandomSeed ;
+  protected: U32 mArbitrationSegment2 = 25 ;
+  protected: U32 mDataSegment2 = 25 ;
   protected: SimulatorGeneratedBit mSimulatorGeneratedAckSlot = GENERATE_BIT_DOMINANT ;
   protected: SimulatorGeneratedBit mSimulatorGeneratedESISlot = GENERATE_BIT_DOMINANT ;
   protected: SimulatorGeneratedBit mSimulatorGeneratedBSRSlot = GENERATE_BIT_DOMINANT ;
