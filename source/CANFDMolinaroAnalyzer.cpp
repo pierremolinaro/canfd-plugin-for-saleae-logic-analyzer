@@ -351,9 +351,9 @@ void CANFDMolinaroAnalyzer::handle_CONTROL_AFTER_R0_state (const bool inBit,
       if (inBit) { // Switch to data bit rate
         const U64 samplesForDataBitRate = mSampleRateHz / mSettings->dataBitRate () ;
         const U64 BSRsamplesX100 =
-          (100 - mSettings->arbitrationSegment2 ()) * mCurrentSamplesPerBit
+          mSettings->arbitrationSamplePoint () * mCurrentSamplesPerBit
         +
-          mSettings->dataSegment2 () * samplesForDataBitRate
+          (100 - mSettings->dataSamplePoint ()) * samplesForDataBitRate
         ;
         const U64 centerBSR = ioBitCenterSampleNumber - mCurrentSamplesPerBit / 2 + BSRsamplesX100 / 200 ;
         addMark (centerBSR, AnalyzerResults::UpArrow) ;
@@ -551,9 +551,9 @@ void CANFDMolinaroAnalyzer::handle_CRCDEL_state (const bool inBit, U64 & ioBitCe
   if (inBit) { // Handle Bit Rate Switch: data bit rate -> arbitration bit rate
     const U32 samplesPerArbitrationBit = mSampleRateHz / mSettings->arbitrationBitRate () ;
     const U64 CRCDELsamplesX100 =
-      (100 - mSettings->dataSegment2 ()) * mCurrentSamplesPerBit
+      mSettings->dataSamplePoint () * mCurrentSamplesPerBit
     +
-      mSettings->arbitrationSegment2 () * samplesPerArbitrationBit
+      (100 - mSettings->arbitrationSamplePoint ()) * samplesPerArbitrationBit
     ;
     const U64 centerCRCDEL = ioBitCenterSampleNumber - mCurrentSamplesPerBit / 2 + CRCDELsamplesX100 / 200 ;
     addMark (centerCRCDEL, AnalyzerResults::One) ;

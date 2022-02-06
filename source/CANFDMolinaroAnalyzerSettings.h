@@ -80,19 +80,19 @@ public:
    return mSimulatorRandomSeed ;
   }
 
-  public: U32 arbitrationSegment2 (void) const {
-   return mArbitrationSegment2 ;
+  public: U32 arbitrationSamplePoint (void) const {
+   return mArbitrationSamplePoint ;
   }
 
-  public: U32 dataSegment2 (void) const {
-   return mDataSegment2 ;
+  public: U32 dataSamplePoint (void) const {
+   return mDataSamplePoint ;
   }
 
   protected: std::auto_ptr <AnalyzerSettingInterfaceChannel> mInputChannelInterface ;
   protected: std::auto_ptr <AnalyzerSettingInterfaceInteger> mArbitrationBitRateInterface ;
   protected: std::auto_ptr <AnalyzerSettingInterfaceInteger> mDataBitRateInterface ;
-  protected: std::auto_ptr <AnalyzerSettingInterfaceInteger> mArbitrationSegment2Interface ;
-  protected: std::auto_ptr <AnalyzerSettingInterfaceInteger> mDataSegment2Interface ;
+  protected: std::auto_ptr <AnalyzerSettingInterfaceInteger> mArbitrationSamplePointInterface ;
+  protected: std::auto_ptr <AnalyzerSettingInterfaceInteger> mDataSamplePointInterface ;
   protected: std::auto_ptr <AnalyzerSettingInterfaceNumberList> mCanChannelInvertedInterface ;
   protected: std::auto_ptr <AnalyzerSettingInterfaceNumberList> mSimulatorAckGenerationInterface ;
   protected: std::auto_ptr <AnalyzerSettingInterfaceNumberList> mSimulatorESIGenerationInterface ;
@@ -104,8 +104,8 @@ public:
   protected: U32 mArbitrationBitRate ;
   protected: U32 mDataBitRate ;
   protected: U32 mSimulatorRandomSeed ;
-  protected: U32 mArbitrationSegment2 = 25 ;
-  protected: U32 mDataSegment2 = 25 ;
+  protected: U32 mArbitrationSamplePoint = 75 ;
+  protected: U32 mDataSamplePoint = 75 ;
   protected: SimulatorGeneratedBit mSimulatorGeneratedAckSlot = GENERATE_BIT_DOMINANT ;
   protected: SimulatorGeneratedBit mSimulatorGeneratedESISlot = GENERATE_BIT_DOMINANT ;
   protected: SimulatorGeneratedBit mSimulatorGeneratedBSRSlot = GENERATE_BIT_DOMINANT ;

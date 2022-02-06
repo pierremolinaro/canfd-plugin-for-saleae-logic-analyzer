@@ -653,16 +653,16 @@ void CANMolinaroSimulationDataGenerator::createCANFD_Frame (const U32 inSamplesP
       mSerialSimulationData.Advance (currentBitHasDataBitRate ? inSamplesPerDataBit : inSamplesPerArbitrationBit) ;
     }else if (currentBitHasDataBitRate && !previousBitHasDataBitRate) { // BSR bit
       const U64 BSRsamplesX100 =
-        (100 - mSettings->arbitrationSegment2 ()) * inSamplesPerArbitrationBit
+        mSettings->arbitrationSamplePoint () * inSamplesPerArbitrationBit
       +
-        mSettings->dataSegment2 () * inSamplesPerDataBit
+        (100 - mSettings->dataSamplePoint ()) * inSamplesPerDataBit
       ;
       mSerialSimulationData.Advance (BSRsamplesX100 / 100) ;
     }else{ // CRCDEL bit
       const U64 CRCDELsamplesX100 =
-        (100 - mSettings->dataSegment2 ()) * inSamplesPerDataBit
+        mSettings->dataSamplePoint () * inSamplesPerDataBit
       +
-        mSettings->arbitrationSegment2 () * inSamplesPerArbitrationBit
+        (100 - mSettings->arbitrationSamplePoint ()) * inSamplesPerArbitrationBit
       ;
       mSerialSimulationData.Advance (CRCDELsamplesX100 / 100) ;
     }

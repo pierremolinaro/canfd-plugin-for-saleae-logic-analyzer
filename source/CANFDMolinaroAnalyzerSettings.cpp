@@ -36,23 +36,23 @@ mDataBitRate (500 * 1000) {
   mDataBitRateInterface->SetMin (1) ;
   mDataBitRateInterface->SetInteger (mDataBitRate) ;
 
-//--- Arbitration Segment 2
-  mArbitrationSegment2Interface.reset (new AnalyzerSettingInterfaceInteger ()) ;
-  mArbitrationSegment2Interface->SetTitleAndTooltip ("Arbitration Segment 2 Part (%)",
-                            "Proportion of segment 2 in bit for arbitration bit rate." );
+//--- Arbitration Sample Point
+  mArbitrationSamplePointInterface.reset (new AnalyzerSettingInterfaceInteger ()) ;
+  mArbitrationSamplePointInterface->SetTitleAndTooltip ("Arbitration Sample Point (%)",
+                            "Sample Point location in arbitration bit." );
 
-  mArbitrationSegment2Interface->SetMax (90) ;
-  mArbitrationSegment2Interface->SetMin (10) ;
-  mArbitrationSegment2Interface->SetInteger (mArbitrationSegment2) ;
+  mArbitrationSamplePointInterface->SetMax (90) ;
+  mArbitrationSamplePointInterface->SetMin (50) ;
+  mArbitrationSamplePointInterface->SetInteger (mArbitrationSamplePoint) ;
 
-//--- Data Segment 2
-  mDataSegment2Interface.reset (new AnalyzerSettingInterfaceInteger ()) ;
-  mDataSegment2Interface->SetTitleAndTooltip ("Data Segment 2 Part (%)",
-                            "Proportion of segment 2 in bit for data bit rate." );
+//--- Data Sample Point
+  mDataSamplePointInterface.reset (new AnalyzerSettingInterfaceInteger ()) ;
+  mDataSamplePointInterface->SetTitleAndTooltip ("Data Sample Point (%)",
+                            "Sample Point location in data bit." );
 
-  mDataSegment2Interface->SetMax (90) ;
-  mDataSegment2Interface->SetMin (10) ;
-  mDataSegment2Interface->SetInteger (mDataSegment2) ;
+  mDataSamplePointInterface->SetMax (90) ;
+  mDataSamplePointInterface->SetMin (50) ;
+  mDataSamplePointInterface->SetInteger (mDataSamplePoint) ;
 
 //--- Add Channel level inversion
   mCanChannelInvertedInterface.reset (new AnalyzerSettingInterfaceNumberList ( )) ;
@@ -128,8 +128,8 @@ mDataBitRate (500 * 1000) {
   AddInterface (mArbitrationBitRateInterface.get ());
   AddInterface (mDataBitRateInterface.get ());
   AddInterface (mCanChannelInvertedInterface.get ());
-  AddInterface (mArbitrationSegment2Interface.get ());
-  AddInterface (mDataSegment2Interface.get ());
+  AddInterface (mArbitrationSamplePointInterface.get ());
+  AddInterface (mDataSamplePointInterface.get ());
   AddInterface (mProtocolInterface.get ());
   AddInterface (mSimulatorRandomSeedInterface.get ());
   AddInterface (mSimulatorAckGenerationInterface.get ());
@@ -155,8 +155,8 @@ CANFDMolinaroAnalyzerSettings::~CANFDMolinaroAnalyzerSettings(){
 bool CANFDMolinaroAnalyzerSettings::SetSettingsFromInterfaces () {
   mInputChannel = mInputChannelInterface->GetChannel();
 
-  mArbitrationSegment2 = mArbitrationSegment2Interface->GetInteger();
-  mDataSegment2 = mDataSegment2Interface->GetInteger();
+  mArbitrationSamplePoint = mArbitrationSamplePointInterface->GetInteger();
+  mDataSamplePoint = mDataSamplePointInterface->GetInteger();
   mArbitrationBitRate = mArbitrationBitRateInterface->GetInteger();
   mSimulatorRandomSeed = mSimulatorRandomSeedInterface->GetInteger () ;
   mDataBitRate = mDataBitRateInterface->GetInteger();
@@ -190,8 +190,8 @@ void CANFDMolinaroAnalyzerSettings::UpdateInterfacesFromSettings () {
   mSimulatorRandomSeedInterface->SetInteger (mSimulatorRandomSeed) ;
   mArbitrationBitRateInterface->SetInteger (mArbitrationBitRate) ;
   mDataBitRateInterface->SetInteger (mDataBitRate) ;
-  mArbitrationSegment2Interface->SetInteger (mArbitrationSegment2) ;
-  mDataSegment2Interface->SetInteger (mDataSegment2) ;
+  mArbitrationSamplePointInterface->SetInteger (mArbitrationSamplePoint) ;
+  mDataSamplePointInterface->SetInteger (mDataSamplePoint) ;
   mCanChannelInvertedInterface->SetNumber (double (mInverted)) ;
   mProtocolInterface->SetNumber (double (mProtocol)) ;
   mSimulatorAckGenerationInterface->SetNumber (mSimulatorGeneratedAckSlot) ;
@@ -211,8 +211,8 @@ void CANFDMolinaroAnalyzerSettings::LoadSettings (const char* settings) {
   text_archive >> mArbitrationBitRate;
   text_archive >> mDataBitRate;
   text_archive >> mInverted;
-  text_archive >> mArbitrationSegment2 ;
-  text_archive >> mDataSegment2 ;
+  text_archive >> mArbitrationSamplePoint ;
+  text_archive >> mDataSamplePoint ;
 
   text_archive >> value ;
   mProtocol = ProtocolSetting (value) ;
