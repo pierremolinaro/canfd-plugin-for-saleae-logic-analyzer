@@ -138,6 +138,8 @@ A fixed form bit is denoted by a `0` (for a dominant bit) or a `1` (recessive bi
 
 The `RTR`, `SRR`, `BSR` and the `ESI` bits are denoted by an `up arrow` (if recessive), or a `down arrow` (if dominant).
 
+A recessive `ACK SLOT` bit is marked with a red `X`, an active one with a down arrow.
+
 Errors are in red color: a red `X` is a Stuff Error, and following bits are tagged with red dots until the bus returns free (11 consecutive recessive bits at arbitration bit rate).
 
 ## Bubble Text

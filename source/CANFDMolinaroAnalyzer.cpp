@@ -575,7 +575,7 @@ void CANFDMolinaroAnalyzer::handle_CRCDEL_state (const bool inBit, U64 & ioBitCe
 void CANFDMolinaroAnalyzer::handle_ACK_state (const bool inBit, const U64 inBitCenterSampleNumber) {
   mFieldBitIndex ++ ;
   if (mFieldBitIndex == 1) { // ACK SLOT
-    addMark (inBitCenterSampleNumber, inBit ? AnalyzerResults::ErrorSquare : AnalyzerResults::Dot);
+    addMark (inBitCenterSampleNumber, inBit ? AnalyzerResults::ErrorSquare : AnalyzerResults::DownArrow);
   }else{ // ACK DELIMITER
     addBubble (ACK_FIELD_RESULT, 0, 0, inBitCenterSampleNumber) ;
     if (inBit) {
