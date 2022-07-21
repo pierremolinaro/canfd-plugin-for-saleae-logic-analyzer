@@ -15,9 +15,19 @@ An addtionnal step may be required on MacOS if the plugin cannot be loaded (see 
 
 Note the `install-release.py` script runs this command and copy the `libCANFDMolinaroAnalyzer.dylib`file to the `~/Documents/customSaleaeLogicAnalyzers` directory.
 
+## Generating Analyzer Simulation Data
+
+(From [https://github.com/saleae/SampleAnalyzer](https://github.com/saleae/SampleAnalyzer))
+
+*The Logic 2 software will need to be opened from the terminal using a specific command to enable simluation mode. Otherwise, by default, when an analyzer is added to digital channels while in Demo mode (i.e. no Logic is connected to the PC), the simulation data on those digital channels will contain seemingly random transitions and will not contain analyzer-specific data.*
+
+*For instructions on enabling simulation mode on the Logic 2 software, please follow the instructions here:*
+[https://support.saleae.com/user-guide/using-logic/demo-mode#generating-analyzer-simulation-data](https://support.saleae.com/user-guide/using-logic/demo-mode#generating-analyzer-simulation-data)
+
+
 ## Selecting Analyzer
 
-The analyzer Name is `CAN 2.0B (Molinaro)`.
+The analyzer Name is `CANFD (Molinaro)`.
 
 ![Setting Dialog](readme-images/selecting-analyzer.png)
 

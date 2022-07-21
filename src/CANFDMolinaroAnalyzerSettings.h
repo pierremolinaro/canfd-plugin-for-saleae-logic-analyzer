@@ -88,18 +88,18 @@ public:
    return mDataSamplePoint ;
   }
 
-  protected: std::auto_ptr <AnalyzerSettingInterfaceChannel> mInputChannelInterface ;
-  protected: std::auto_ptr <AnalyzerSettingInterfaceInteger> mArbitrationBitRateInterface ;
-  protected: std::auto_ptr <AnalyzerSettingInterfaceInteger> mDataBitRateInterface ;
-  protected: std::auto_ptr <AnalyzerSettingInterfaceInteger> mArbitrationSamplePointInterface ;
-  protected: std::auto_ptr <AnalyzerSettingInterfaceInteger> mDataSamplePointInterface ;
-  protected: std::auto_ptr <AnalyzerSettingInterfaceNumberList> mCanChannelInvertedInterface ;
-  protected: std::auto_ptr <AnalyzerSettingInterfaceNumberList> mSimulatorAckGenerationInterface ;
-  protected: std::auto_ptr <AnalyzerSettingInterfaceNumberList> mSimulatorESIGenerationInterface ;
-  protected: std::auto_ptr <AnalyzerSettingInterfaceNumberList> mSimulatorBSRGenerationInterface ;
-  protected: std::auto_ptr <AnalyzerSettingInterfaceNumberList> mSimulatorFrameTypeGenerationInterface ;
-  protected: std::auto_ptr <AnalyzerSettingInterfaceNumberList> mProtocolInterface ;
-  protected: std::auto_ptr <AnalyzerSettingInterfaceInteger> mSimulatorRandomSeedInterface ;
+  protected: std::shared_ptr <AnalyzerSettingInterfaceChannel> mInputChannelInterface ;
+  protected: std::shared_ptr <AnalyzerSettingInterfaceInteger> mArbitrationBitRateInterface ;
+  protected: std::shared_ptr <AnalyzerSettingInterfaceInteger> mDataBitRateInterface ;
+  protected: std::shared_ptr <AnalyzerSettingInterfaceInteger> mArbitrationSamplePointInterface ;
+  protected: std::shared_ptr <AnalyzerSettingInterfaceInteger> mDataSamplePointInterface ;
+  protected: std::shared_ptr <AnalyzerSettingInterfaceNumberList> mCanChannelInvertedInterface ;
+  protected: std::shared_ptr <AnalyzerSettingInterfaceNumberList> mSimulatorAckGenerationInterface ;
+  protected: std::shared_ptr <AnalyzerSettingInterfaceNumberList> mSimulatorESIGenerationInterface ;
+  protected: std::shared_ptr <AnalyzerSettingInterfaceNumberList> mSimulatorBSRGenerationInterface ;
+  protected: std::shared_ptr <AnalyzerSettingInterfaceNumberList> mSimulatorFrameTypeGenerationInterface ;
+  protected: std::shared_ptr <AnalyzerSettingInterfaceNumberList> mProtocolInterface ;
+  protected: std::shared_ptr <AnalyzerSettingInterfaceInteger> mSimulatorRandomSeedInterface ;
 
   protected: U32 mArbitrationBitRate ;
   protected: U32 mDataBitRate ;

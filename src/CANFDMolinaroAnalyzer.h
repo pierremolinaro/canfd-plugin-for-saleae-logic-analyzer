@@ -35,8 +35,8 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
   public: virtual bool NeedsRerun () ;
 
 //--- Protected properties
-  protected: std::auto_ptr< CANFDMolinaroAnalyzerSettings > mSettings;
-  protected: std::auto_ptr< CANFDMolinaroAnalyzerResults > mResults;
+  protected: std::shared_ptr < CANFDMolinaroAnalyzerSettings > mSettings;
+  protected: std::shared_ptr < CANFDMolinaroAnalyzerResults > mResults;
   protected: AnalyzerChannelData* mSerial;
 
   protected: CANMolinaroSimulationDataGenerator mSimulationDataGenerator;
