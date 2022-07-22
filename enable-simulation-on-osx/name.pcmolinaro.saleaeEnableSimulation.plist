@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>setenv.ENABLE_SIMULATION</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>launchctl</string>
+    <string>setenv</string>
+    <string>ENABLE_SIMULATION</string>
+    <string>1</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+</dict>
+</plist>

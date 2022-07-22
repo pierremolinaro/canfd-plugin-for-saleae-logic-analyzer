@@ -2,26 +2,30 @@
 #include "CANFDMolinaroAnalyzerSettings.h"
 #include <AnalyzerChannelData.h>
 
+#include <string>
+#include <sstream>
+
 //--------------------------------------------------------------------------------------------------
 //   CANFDMolinaroAnalyzer
 //--------------------------------------------------------------------------------------------------
 
-CANFDMolinaroAnalyzer::CANFDMolinaroAnalyzer () :
+CANFDMolinaroAnalyzer::CANFDMolinaroAnalyzer (void) :
 Analyzer2 (),
 mSettings (new CANFDMolinaroAnalyzerSettings ()),
-mSimulationInitilized (false) {
+mSimulationInitialized (false) {
   SetAnalyzerSettings (mSettings.get()) ;
+  UseFrameV2 () ;
 }
 
 //--------------------------------------------------------------------------------------------------
 
-CANFDMolinaroAnalyzer::~CANFDMolinaroAnalyzer () {
+CANFDMolinaroAnalyzer::~CANFDMolinaroAnalyzer (void) {
   KillThread();
 }
 
 //--------------------------------------------------------------------------------------------------
 
-void CANFDMolinaroAnalyzer::SetupResults () {
+void CANFDMolinaroAnalyzer::SetupResults (void) {
   mResults.reset (new CANFDMolinaroAnalyzerResults (this, mSettings.get())) ;
   SetAnalyzerResults (mResults.get()) ;
   mResults->AddChannelBubblesWillAppearOn (mSettings->mInputChannel) ;
@@ -35,8 +39,6 @@ void CANFDMolinaroAnalyzer::WorkerThread () {
   mSerial = GetAnalyzerChannelData (mSettings->mInputChannel) ;
 //--- Sample settings
   mCurrentSamplesPerBit = mSampleRateHz / mSettings->arbitrationBitRate () ;
-//   const U32 samplesPerArbitrationBit = mSampleRateHz / mSettings->arbitrationBitRate () ;
-//   const U32 samplesPerDataBit = mSampleRateHz / mSettings->dataBitRate () ;
 //--- Synchronize to recessive level
   if (mSerial->GetBitState() == (inverted ? BIT_HIGH : BIT_LOW)) {
     mSerial->AdvanceToNextEdge () ;
@@ -75,9 +77,9 @@ bool CANFDMolinaroAnalyzer::NeedsRerun () {
 U32 CANFDMolinaroAnalyzer::GenerateSimulationData (U64 minimum_sample_index,
                                                  U32 device_sample_rate,
                                                  SimulationChannelDescriptor** simulation_channels ) {
-  if( mSimulationInitilized == false ) {
+  if (mSimulationInitialized == false) {
     mSimulationDataGenerator.Initialize( GetSimulationSampleRate(), mSettings.get() );
-    mSimulationInitilized = true;
+    mSimulationInitialized = true;
   }
   return mSimulationDataGenerator.GenerateSimulationData (minimum_sample_index,
                                                           device_sample_rate,
@@ -695,6 +697,94 @@ void CANFDMolinaroAnalyzer::addBubble (const U8 inBubbleType,
   const U64 endSampleNumber = inBitCenterSampleNumber + mCurrentSamplesPerBit / 2 ;
   frame.mEndingSampleInclusive = endSampleNumber ;
   mResults->AddFrame (frame) ;
+
+  FrameV2 frameV2 ;
+  switch (inBubbleType) {
+  case STANDARD_IDENTIFIER_FIELD_RESULT :
+    { const U8 idf [2] = { U8 (inData1 >> 8), U8 (inData1) } ;
+      frameV2.AddByteArray ("Value", idf, 2) ;
+      mResults->AddFrameV2 (frameV2, "Std Idf", mStartOfFieldSampleNumber, endSampleNumber) ;
+    }
+    break ;
+  case EXTENDED_IDENTIFIER_FIELD_RESULT :
+    { const U8 idf [4] = {
+        U8 (inData1 >> 24), U8 (inData1 >> 16), U8 (inData1 >> 8), U8 (inData1)
+      } ;
+      frameV2.AddByteArray ("Value", idf, 4) ;
+      mResults->AddFrameV2 (frameV2, "Ext Idf", mStartOfFieldSampleNumber, endSampleNumber) ;
+    }
+    break ;
+  case CAN20B_CONTROL_FIELD_RESULT :
+    frameV2.AddByte ("Value", inData1) ;
+    mResults->AddFrameV2 (frameV2, "Ctrl", mStartOfFieldSampleNumber, endSampleNumber) ;
+    break ;
+  case CANFD_CONTROL_FIELD_RESULT :
+    { frameV2.AddByte ("Value", inData1) ;
+      std::stringstream str ;
+      str << "Ctrl (FDF" ;
+      if ((inData2 & 1) != 0) {
+        str << ", BRS" ;
+      }
+      if ((inData2 & 2) != 0) {
+        str << ", ESI" ;
+      }
+      str << ")" ;
+      mResults->AddFrameV2 (frameV2, str.str ().c_str (), mStartOfFieldSampleNumber, endSampleNumber) ;
+    }
+    break ;
+  case DATA_FIELD_RESULT :
+    { frameV2.AddByte ("Value", inData1) ;
+      std::stringstream str ;
+      str << "D" << inData2 ;
+      mResults->AddFrameV2 (frameV2, str.str ().c_str (), mStartOfFieldSampleNumber, endSampleNumber) ;
+    }
+    break ;
+  case CRC15_FIELD_RESULT :
+    { const U8 crc [2] = { U8 (inData1 >> 8), U8 (inData1) } ;
+      frameV2.AddByteArray ("Value", crc, 2) ;
+      mResults->AddFrameV2 (frameV2, "CRC15", mStartOfFieldSampleNumber, endSampleNumber) ;
+    }
+    break ;
+  case CRC17_FIELD_RESULT :
+    { const U8 crc [3] = { U8 (inData1 >> 16), U8 (inData1 >> 8), U8 (inData1) } ;
+      frameV2.AddByteArray ("Value", crc, 3) ;
+      mResults->AddFrameV2 (frameV2, "CRC17", mStartOfFieldSampleNumber, endSampleNumber) ;
+    }
+    break ;
+  case CRC21_FIELD_RESULT :
+    { const U8 crc [3] = { U8 (inData1 >> 16), U8 (inData1 >> 8), U8 (inData1) } ;
+      frameV2.AddByteArray ("Value", crc, 3) ;
+      mResults->AddFrameV2 (frameV2, "CRC21", mStartOfFieldSampleNumber, endSampleNumber) ;
+    }
+    break ;
+  case ACK_FIELD_RESULT :
+    mResults->AddFrameV2 (frameV2, "ACK", mStartOfFieldSampleNumber, endSampleNumber) ;
+    break ;
+  case EOF_FIELD_RESULT :
+    mResults->AddFrameV2 (frameV2, "EOF", mStartOfFieldSampleNumber, endSampleNumber) ;
+    break ;
+  case INTERMISSION_FIELD_RESULT :
+//     { const U64 frameSampleCount = inData1 ;
+//       const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
+//       const U64 length = (frameSampleCount + samplesPerBit / 2) / samplesPerBit ;
+//       const U64 stuffBitCount = inData2 ;
+//       const U64 durationMicroSeconds = frameSampleCount * 1000000 / mSampleRateHz ;
+//       std::stringstream str ;
+//       str << length << " bits, "
+//           << durationMicroSeconds << "µs, "
+//           << stuffBitCount << " stuff bit" << ((inData2 > 1) ? "s" : "") ;
+//       frameV2.AddString ("Value", str.str ().c_str ()) ;
+      mResults->AddFrameV2 (frameV2, "IFS", mStartOfFieldSampleNumber, endSampleNumber) ;
+//    }
+    break ;
+  case CAN_ERROR_RESULT :
+    mResults->AddFrameV2 (frameV2, "Error", mStartOfFieldSampleNumber, endSampleNumber) ;
+    break ;
+  }
+
+  mResults->CommitResults () ;
+
+
   ReportProgress (frame.mEndingSampleInclusive) ;
 //--- Prepare for next bubble
   mStartOfFieldSampleNumber = endSampleNumber ;

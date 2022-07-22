@@ -40,7 +40,7 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
   protected: AnalyzerChannelData* mSerial;
 
   protected: CANMolinaroSimulationDataGenerator mSimulationDataGenerator;
-   protected: bool mSimulationInitilized;
+   protected: bool mSimulationInitialized ;
 
   protected: U32 mSampleRateHz;
 

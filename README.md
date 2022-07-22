@@ -1,19 +1,7 @@
 # canfd-plugin-for-saleae-logic-analyzer
 CANFD Plugin for Saleae Logic2 Analyzer
 
-## Building and installing the plugin
-
-For building the plugin, see [https://support.saleae.com/saleae-api-and-sdk/protocol-analyzer-sdk/build] (https://support.saleae.com/saleae-api-and-sdk/protocol-analyzer-sdk/build) 
-
-For installing the plugin, see [https://support.saleae.com/faq/technical-faq/setting-up-developer-directory](https://support.saleae.com/faq/technical-faq/setting-up-developer-directory)
-
-### MacOS addtionnal step
-An addtionnal step may be required on MacOS if the plugin cannot be loaded (see `Logic 2 MacOS Instructions` on previous page). The commands to run are :
-
-    cd release
-    install_name_tool -change @executable_path/libAnalyzer.dylib @rpath/libAnalyzer.dylib libCANFDMolinaroAnalyzer.dylib
-
-Note the `install-release.py` script runs this command and copy the `libCANFDMolinaroAnalyzer.dylib`file to the `~/Documents/customSaleaeLogicAnalyzers` directory.
+For building the plugin, see [https://github.com/saleae/SampleAnalyzer](https://github.com/saleae/SampleAnalyzer)
 
 ## Generating Analyzer Simulation Data
 
@@ -23,6 +11,12 @@ Note the `install-release.py` script runs this command and copy the `libCANFDMol
 
 *For instructions on enabling simulation mode on the Logic 2 software, please follow the instructions here:*
 [https://support.saleae.com/user-guide/using-logic/demo-mode#generating-analyzer-simulation-data](https://support.saleae.com/user-guide/using-logic/demo-mode#generating-analyzer-simulation-data)
+
+### How to permanently enable simulation on Mac OS X
+
+Here is a trick for permanently enabling simulation on Mac OS X. Just copy the `name.pcmolinaro.saleaeEnableSimulation.plist` file (located in `enable-simulation-on-osx` directory) in your `~/Library/LaunchAgents` directory. Then log out then log in (or restart), it is done, simulation is permanently enabled.
+
+For permanently  disabling this feature, delete `~/Library/LaunchAgents/name.pcmolinaro.saleaeEnableSimulation.plist` and log out then log in (or restart).
 
 
 ## Selecting Analyzer
@@ -177,13 +171,7 @@ For each frame, the terminal contains:
  
 ## Data Table
 
-Every frame field is reported in data table. Unfortunatly, `Type` column contents cannot be set with the current SDK API (See [https://discuss.saleae.com/t/custom-analyzers/187/7](https://discuss.saleae.com/t/custom-analyzers/187/7)).
+Every frame field is reported in data table. A CAN 2.0B control field type is  `Ctrl`, a CANFD one is `Ctrl (FDF)`, with two additional flags: `BRS`, `ESI`.
 
 
 ![](readme-images/data-table.png)
-
-Note the Data Table has a fourth column, `Value` that is not visible by default. You can enlarge the data table by dragging its left border, and hide the useless `Type` column (`control click` on column header).
-
-
-
-![](readme-images/data-table-value.png)
