@@ -37,7 +37,7 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
 //--- Protected properties
   protected: std::shared_ptr < CANFDMolinaroAnalyzerSettings > mSettings;
   protected: std::shared_ptr < CANFDMolinaroAnalyzerResults > mResults;
-  protected: AnalyzerChannelData* mSerial;
+  protected: // AnalyzerChannelData* mSerial;
 
   protected: CANMolinaroSimulationDataGenerator mSimulationDataGenerator;
    protected: bool mSimulationInitialized ;
