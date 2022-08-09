@@ -134,6 +134,8 @@ This is the capture of a CANFD Standard data frame in ISO format, identifier `0x
 
 By default, a dot indicates the center of a bit sent at arbitration bit rate, a square indicates the center of a bit sent at data bit rate.
 
+The orange square is an `IDLE` bit (from release 1.1.0).
+
 The green dot is the `SOF` (*Start Of Frame*) field.
 
 A white `X` is a Stuff Bit.
