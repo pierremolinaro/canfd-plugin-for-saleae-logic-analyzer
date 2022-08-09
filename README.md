@@ -124,7 +124,7 @@ Three settings are available:
 * `Random`: the `ESI` is randomly recessive or dominant.
 
 
-##Capture Display
+### Capture Display
 
 This is the capture of a CANFD Standard data frame in ISO format, identifier `0x785`, with `BRS` bit recessive, and two data byte (`0x0B` and `0x5E`), with `ACK SLOT` dominant.
 
