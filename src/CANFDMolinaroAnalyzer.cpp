@@ -14,7 +14,7 @@ Analyzer2 (),
 mSettings (new CANFDMolinaroAnalyzerSettings ()),
 mSimulationInitialized (false) {
   SetAnalyzerSettings (mSettings.get()) ;
-//  UseFrameV2 () ;
+  UseFrameV2 () ;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -34,10 +34,6 @@ void CANFDMolinaroAnalyzer::SetupResults (void) {
 //--------------------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::WorkerThread (void) {
-  mResults.reset (new CANFDMolinaroAnalyzerResults (this, mSettings.get ())) ;
-  SetAnalyzerResults (mResults.get()) ;
-  mResults->AddChannelBubblesWillAppearOn (mSettings->mInputChannel) ;
-//---
   const bool inverted = mSettings->inverted () ;
   mSampleRateHz = GetSampleRate () ;
   AnalyzerChannelData * serial = GetAnalyzerChannelData (mSettings->mInputChannel) ;
@@ -53,13 +49,12 @@ void CANFDMolinaroAnalyzer::WorkerThread (void) {
   mPreviousBit = (serial->GetBitState () == BIT_HIGH) ^ inverted ;
 //---
   while (1) {
-//    serial->AdvanceToNextEdge () ;
     const bool currentBitValue = (serial->GetBitState () == BIT_HIGH) ^ inverted ;
     const U64 start = serial->GetSampleNumber () ;
     const U64 nextEdge = serial->GetSampleOfNextEdge () ;
 
     U64 currentCenter = start + mCurrentSamplesPerBit / 2 ;
-    while (currentCenter < (nextEdge + mCurrentSamplesPerBit / 4)) {
+    while (currentCenter < nextEdge) {
       enterBit (currentBitValue, currentCenter) ;
       currentCenter += mCurrentSamplesPerBit ;
     }
@@ -711,78 +706,78 @@ void CANFDMolinaroAnalyzer::addBubble (const U8 inBubbleType,
   frame.mEndingSampleInclusive = endSampleNumber ;
   mResults->AddFrame (frame) ;
 
-//   FrameV2 frameV2 ;
-//   switch (inBubbleType) {
-//   case STANDARD_IDENTIFIER_FIELD_RESULT :
-//     { const U8 idf [2] = { U8 (inData1 >> 8), U8 (inData1) } ;
-//       frameV2.AddByteArray ("Value", idf, 2) ;
-//       mResults->AddFrameV2 (frameV2, "Std Idf", mStartOfFieldSampleNumber, endSampleNumber) ;
-//     }
-//     break ;
-//   case EXTENDED_IDENTIFIER_FIELD_RESULT :
-//     { const U8 idf [4] = {
-//         U8 (inData1 >> 24), U8 (inData1 >> 16), U8 (inData1 >> 8), U8 (inData1)
-//       } ;
-//       frameV2.AddByteArray ("Value", idf, 4) ;
-//       mResults->AddFrameV2 (frameV2, "Ext Idf", mStartOfFieldSampleNumber, endSampleNumber) ;
-//     }
-//     break ;
-//   case CAN20B_CONTROL_FIELD_RESULT :
-//     frameV2.AddByte ("Value", inData1) ;
-//     mResults->AddFrameV2 (frameV2, "Ctrl", mStartOfFieldSampleNumber, endSampleNumber) ;
-//     break ;
-//   case CANFD_CONTROL_FIELD_RESULT :
-//     { frameV2.AddByte ("Value", inData1) ;
-//       std::stringstream str ;
-//       str << "Ctrl (FDF" ;
-//       if ((inData2 & 1) != 0) {
-//         str << ", BRS" ;
-//       }
-//       if ((inData2 & 2) != 0) {
-//         str << ", ESI" ;
-//       }
-//       str << ")" ;
-//       mResults->AddFrameV2 (frameV2, str.str ().c_str (), mStartOfFieldSampleNumber, endSampleNumber) ;
-//     }
-//     break ;
-//   case DATA_FIELD_RESULT :
-//     { frameV2.AddByte ("Value", inData1) ;
-//       std::stringstream str ;
-//       str << "D" << inData2 ;
-//       mResults->AddFrameV2 (frameV2, str.str ().c_str (), mStartOfFieldSampleNumber, endSampleNumber) ;
-//     }
-//     break ;
-//   case CRC15_FIELD_RESULT :
-//     { const U8 crc [2] = { U8 (inData1 >> 8), U8 (inData1) } ;
-//       frameV2.AddByteArray ("Value", crc, 2) ;
-//       mResults->AddFrameV2 (frameV2, "CRC15", mStartOfFieldSampleNumber, endSampleNumber) ;
-//     }
-//     break ;
-//   case CRC17_FIELD_RESULT :
-//     { const U8 crc [3] = { U8 (inData1 >> 16), U8 (inData1 >> 8), U8 (inData1) } ;
-//       frameV2.AddByteArray ("Value", crc, 3) ;
-//       mResults->AddFrameV2 (frameV2, "CRC17", mStartOfFieldSampleNumber, endSampleNumber) ;
-//     }
-//     break ;
-//   case CRC21_FIELD_RESULT :
-//     { const U8 crc [3] = { U8 (inData1 >> 16), U8 (inData1 >> 8), U8 (inData1) } ;
-//       frameV2.AddByteArray ("Value", crc, 3) ;
-//       mResults->AddFrameV2 (frameV2, "CRC21", mStartOfFieldSampleNumber, endSampleNumber) ;
-//     }
-//     break ;
-//   case ACK_FIELD_RESULT :
-//     mResults->AddFrameV2 (frameV2, "ACK", mStartOfFieldSampleNumber, endSampleNumber) ;
-//     break ;
-//   case EOF_FIELD_RESULT :
-//     mResults->AddFrameV2 (frameV2, "EOF", mStartOfFieldSampleNumber, endSampleNumber) ;
-//     break ;
-//   case INTERMISSION_FIELD_RESULT :
-//     mResults->AddFrameV2 (frameV2, "IFS", mStartOfFieldSampleNumber, endSampleNumber) ;
-//     break ;
-//   case CAN_ERROR_RESULT :
-//     mResults->AddFrameV2 (frameV2, "Error", mStartOfFieldSampleNumber, endSampleNumber) ;
-//     break ;
-//   }
+  FrameV2 frameV2 ;
+  switch (inBubbleType) {
+  case STANDARD_IDENTIFIER_FIELD_RESULT :
+    { const U8 idf [2] = { U8 (inData1 >> 8), U8 (inData1) } ;
+      frameV2.AddByteArray ("Value", idf, 2) ;
+      mResults->AddFrameV2 (frameV2, "Std Idf", mStartOfFieldSampleNumber, endSampleNumber) ;
+    }
+    break ;
+  case EXTENDED_IDENTIFIER_FIELD_RESULT :
+    { const U8 idf [4] = {
+        U8 (inData1 >> 24), U8 (inData1 >> 16), U8 (inData1 >> 8), U8 (inData1)
+      } ;
+      frameV2.AddByteArray ("Value", idf, 4) ;
+      mResults->AddFrameV2 (frameV2, "Ext Idf", mStartOfFieldSampleNumber, endSampleNumber) ;
+    }
+    break ;
+  case CAN20B_CONTROL_FIELD_RESULT :
+    frameV2.AddByte ("Value", inData1) ;
+    mResults->AddFrameV2 (frameV2, "Ctrl", mStartOfFieldSampleNumber, endSampleNumber) ;
+    break ;
+  case CANFD_CONTROL_FIELD_RESULT :
+    { frameV2.AddByte ("Value", inData1) ;
+      std::stringstream str ;
+      str << "Ctrl (FDF" ;
+      if ((inData2 & 1) != 0) {
+        str << ", BRS" ;
+      }
+      if ((inData2 & 2) != 0) {
+        str << ", ESI" ;
+      }
+      str << ")" ;
+      mResults->AddFrameV2 (frameV2, str.str ().c_str (), mStartOfFieldSampleNumber, endSampleNumber) ;
+    }
+    break ;
+  case DATA_FIELD_RESULT :
+    { frameV2.AddByte ("Value", inData1) ;
+      std::stringstream str ;
+      str << "D" << inData2 ;
+      mResults->AddFrameV2 (frameV2, str.str ().c_str (), mStartOfFieldSampleNumber, endSampleNumber) ;
+    }
+    break ;
+  case CRC15_FIELD_RESULT :
+    { const U8 crc [2] = { U8 (inData1 >> 8), U8 (inData1) } ;
+      frameV2.AddByteArray ("Value", crc, 2) ;
+      mResults->AddFrameV2 (frameV2, "CRC15", mStartOfFieldSampleNumber, endSampleNumber) ;
+    }
+    break ;
+  case CRC17_FIELD_RESULT :
+    { const U8 crc [3] = { U8 (inData1 >> 16), U8 (inData1 >> 8), U8 (inData1) } ;
+      frameV2.AddByteArray ("Value", crc, 3) ;
+      mResults->AddFrameV2 (frameV2, "CRC17", mStartOfFieldSampleNumber, endSampleNumber) ;
+    }
+    break ;
+  case CRC21_FIELD_RESULT :
+    { const U8 crc [3] = { U8 (inData1 >> 16), U8 (inData1 >> 8), U8 (inData1) } ;
+      frameV2.AddByteArray ("Value", crc, 3) ;
+      mResults->AddFrameV2 (frameV2, "CRC21", mStartOfFieldSampleNumber, endSampleNumber) ;
+    }
+    break ;
+  case ACK_FIELD_RESULT :
+    mResults->AddFrameV2 (frameV2, "ACK", mStartOfFieldSampleNumber, endSampleNumber) ;
+    break ;
+  case EOF_FIELD_RESULT :
+    mResults->AddFrameV2 (frameV2, "EOF", mStartOfFieldSampleNumber, endSampleNumber) ;
+    break ;
+  case INTERMISSION_FIELD_RESULT :
+    mResults->AddFrameV2 (frameV2, "IFS", mStartOfFieldSampleNumber, endSampleNumber) ;
+    break ;
+  case CAN_ERROR_RESULT :
+    mResults->AddFrameV2 (frameV2, "Error", mStartOfFieldSampleNumber, endSampleNumber) ;
+    break ;
+  }
 
   mResults->CommitResults () ;
   ReportProgress (frame.mEndingSampleInclusive) ;
