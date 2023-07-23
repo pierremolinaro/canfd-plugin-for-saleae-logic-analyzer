@@ -5,9 +5,9 @@
 #include <string>
 #include <sstream>
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 //   CANFDMolinaroAnalyzer
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 CANFDMolinaroAnalyzer::CANFDMolinaroAnalyzer (void) :
 Analyzer2 (),
@@ -17,13 +17,13 @@ mSimulationInitialized (false) {
   UseFrameV2 () ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 CANFDMolinaroAnalyzer::~CANFDMolinaroAnalyzer (void) {
   KillThread();
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::SetupResults (void) {
   mResults.reset (new CANFDMolinaroAnalyzerResults (this, mSettings.get())) ;
@@ -31,7 +31,7 @@ void CANFDMolinaroAnalyzer::SetupResults (void) {
   mResults->AddChannelBubblesWillAppearOn (mSettings->mInputChannel) ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::WorkerThread (void) {
   const bool inverted = mSettings->inverted () ;
@@ -64,13 +64,13 @@ void CANFDMolinaroAnalyzer::WorkerThread (void) {
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 bool CANFDMolinaroAnalyzer::NeedsRerun () {
   return false;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 U32 CANFDMolinaroAnalyzer::GenerateSimulationData (U64 minimum_sample_index,
                                                  U32 device_sample_rate,
@@ -84,7 +84,7 @@ U32 CANFDMolinaroAnalyzer::GenerateSimulationData (U64 minimum_sample_index,
                                                           simulation_channels) ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 U32 CANFDMolinaroAnalyzer::GetMinimumSampleRateHz () {
   const U32 arbitrationBitRate = mSettings->arbitrationBitRate () ;
@@ -93,33 +93,33 @@ U32 CANFDMolinaroAnalyzer::GetMinimumSampleRateHz () {
   return max * 12 ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 const char* CANFDMolinaroAnalyzer::GetAnalyzerName () const {
   return "CANFD (Molinaro)";
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 const char* GetAnalyzerName () {
   return "CANFD (Molinaro)";
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 Analyzer* CreateAnalyzer () {
   return new CANFDMolinaroAnalyzer();
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void DestroyAnalyzer (Analyzer* analyzer) {
   delete analyzer;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 //  CAN FRAME DECODER
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::enterBit (const bool inBit, U64 & ioBitCenterSampleNumber) {
   if (!mUnstuffingActive) {
@@ -151,11 +151,11 @@ void CANFDMolinaroAnalyzer::enterBit (const bool inBit, U64 & ioBitCenterSampleN
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 static const uint8_t CANFD_LENGTH [16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64} ;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::decodeFrameBit (const bool inBit, U64 & ioBitCenterSampleNumber) {
   switch (mFrameFieldEngineState) {
@@ -207,7 +207,7 @@ void CANFDMolinaroAnalyzer::decodeFrameBit (const bool inBit, U64 & ioBitCenterS
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::handle_IDLE_state (const bool inBit, const U64 inBitCenterSampleNumber) {
   if (inBit) {
@@ -242,7 +242,7 @@ void CANFDMolinaroAnalyzer::handle_IDLE_state (const bool inBit, const U64 inBit
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::handle_IDENTIFIER_state (const bool inBit, const U64 inBitCenterSampleNumber) {
   enterBitInCRC15 (inBit) ;
@@ -291,7 +291,7 @@ void CANFDMolinaroAnalyzer::handle_IDENTIFIER_state (const bool inBit, const U64
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 
 void CANFDMolinaroAnalyzer::handle_CONTROL_BASE_state (const bool inBit, const U64 inBitCenterSampleNumber) {
@@ -318,7 +318,7 @@ void CANFDMolinaroAnalyzer::handle_CONTROL_BASE_state (const bool inBit, const U
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 
 void CANFDMolinaroAnalyzer::handle_CONTROL_EXTENDED_state (const bool inBit, const U64 inBitCenterSampleNumber) {
@@ -342,7 +342,7 @@ void CANFDMolinaroAnalyzer::handle_CONTROL_EXTENDED_state (const bool inBit, con
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::handle_CONTROL_AFTER_R0_state (const bool inBit,
                                                            U64 & ioBitCenterSampleNumber) {
@@ -415,7 +415,7 @@ void CANFDMolinaroAnalyzer::handle_CONTROL_AFTER_R0_state (const bool inBit,
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::handle_DATA_state (const bool inBit, const U64 inBitCenterSampleNumber) {
   enterBitInCRC15 (inBit) ;
@@ -447,7 +447,7 @@ void CANFDMolinaroAnalyzer::handle_DATA_state (const bool inBit, const U64 inBit
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::handle_CRC15_state (const bool inBit, const U64 inBitCenterSampleNumber) {
   enterBitInCRC15 (inBit) ;
@@ -463,7 +463,7 @@ void CANFDMolinaroAnalyzer::handle_CRC15_state (const bool inBit, const U64 inBi
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::handle_SBC_state (const bool inBit, const U64 inBitCenterSampleNumber) {
   mFieldBitIndex += 1 ;
@@ -510,7 +510,7 @@ void CANFDMolinaroAnalyzer::handle_SBC_state (const bool inBit, const U64 inBitC
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::handle_CRC17_state (const bool inBit, const U64 inBitCenterSampleNumber) {
   if ((mFieldBitIndex % 5) != 0) {
@@ -530,7 +530,7 @@ void CANFDMolinaroAnalyzer::handle_CRC17_state (const bool inBit, const U64 inBi
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::handle_CRC21_state (const bool inBit, const U64 inBitCenterSampleNumber) {
   if ((mFieldBitIndex % 5) != 0) {
@@ -550,7 +550,7 @@ void CANFDMolinaroAnalyzer::handle_CRC21_state (const bool inBit, const U64 inBi
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::handle_CRCDEL_state (const bool inBit, U64 & ioBitCenterSampleNumber) {
   mUnstuffingActive = false ;
@@ -577,7 +577,7 @@ void CANFDMolinaroAnalyzer::handle_CRCDEL_state (const bool inBit, U64 & ioBitCe
   mFrameFieldEngineState = FrameFieldEngineState::ACK ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::handle_ACK_state (const bool inBit, const U64 inBitCenterSampleNumber) {
   mFieldBitIndex ++ ;
@@ -596,7 +596,7 @@ void CANFDMolinaroAnalyzer::handle_ACK_state (const bool inBit, const U64 inBitC
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::handle_ENDOFFRAME_state (const bool inBit, const U64 inBitCenterSampleNumber) {
   if (inBit) {
@@ -613,7 +613,7 @@ void CANFDMolinaroAnalyzer::handle_ENDOFFRAME_state (const bool inBit, const U64
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::handle_INTERMISSION_state (const bool inBit, const U64 inBitCenterSampleNumber) {
   if (inBit) {
@@ -630,7 +630,7 @@ void CANFDMolinaroAnalyzer::handle_INTERMISSION_state (const bool inBit, const U
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::handle_DECODER_ERROR_state (const bool inBit, const U64 inBitCenterSampleNumber) {
   mUnstuffingActive = false ;
@@ -647,7 +647,7 @@ void CANFDMolinaroAnalyzer::handle_DECODER_ERROR_state (const bool inBit, const 
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::enterBitInCRC15 (const bool inBit) {
   const bool bit14 = (mCRC15Accumulator & (1 << 14)) != 0 ;
@@ -659,7 +659,7 @@ void CANFDMolinaroAnalyzer::enterBitInCRC15 (const bool inBit) {
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::enterBitInCRC17 (const bool inBit) {
   const bool bit16 = (mCRC17Accumulator & (1 << 16)) != 0 ;
@@ -671,7 +671,7 @@ void CANFDMolinaroAnalyzer::enterBitInCRC17 (const bool inBit) {
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::enterBitInCRC21 (const bool inBit) {
   const bool bit20 = (mCRC21Accumulator & (1 << 20)) != 0 ;
@@ -683,14 +683,14 @@ void CANFDMolinaroAnalyzer::enterBitInCRC21 (const bool inBit) {
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::addMark (const U64 inBitCenterSampleNumber,
                                      const AnalyzerResults::MarkerType inMarker) {
   mResults->AddMarker (inBitCenterSampleNumber, inMarker, mSettings->mInputChannel);
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::addBubble (const U8 inBubbleType,
                                        const U64 inData1,
@@ -785,7 +785,7 @@ void CANFDMolinaroAnalyzer::addBubble (const U8 inBubbleType,
   mStartOfFieldSampleNumber = endSampleNumber ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzer::enterInErrorMode (const U64 inBitCenterSampleNumber) {
   mStartOfFieldSampleNumber = inBitCenterSampleNumber ;
@@ -794,6 +794,4 @@ void CANFDMolinaroAnalyzer::enterInErrorMode (const U64 inBitCenterSampleNumber)
   mUnstuffingActive = false ;
 }
 
-//--------------------------------------------------------------------------------------------------
-
-
+//----------------------------------------------------------------------------------------

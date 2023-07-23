@@ -1,7 +1,7 @@
 #include "CANFDMolinaroAnalyzerSettings.h"
 #include <AnalyzerHelpers.h>
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 CANFDMolinaroAnalyzerSettings::CANFDMolinaroAnalyzerSettings() :
 mInputChannel (UNDEFINED_CHANNEL),
@@ -145,12 +145,12 @@ mDataBitRate (500 * 1000) {
   AddChannel (mInputChannel, "Serial", false) ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 CANFDMolinaroAnalyzerSettings::~CANFDMolinaroAnalyzerSettings(){
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 bool CANFDMolinaroAnalyzerSettings::SetSettingsFromInterfaces () {
   mInputChannel = mInputChannelInterface->GetChannel();
@@ -183,7 +183,7 @@ bool CANFDMolinaroAnalyzerSettings::SetSettingsFromInterfaces () {
   return true;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzerSettings::UpdateInterfacesFromSettings () {
   mInputChannelInterface->SetChannel (mInputChannel) ;
@@ -200,7 +200,7 @@ void CANFDMolinaroAnalyzerSettings::UpdateInterfacesFromSettings () {
   mSimulatorESIGenerationInterface->SetNumber (mSimulatorGeneratedESISlot) ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFDMolinaroAnalyzerSettings::LoadSettings (const char* settings) {
   U32 value ;
@@ -235,7 +235,7 @@ void CANFDMolinaroAnalyzerSettings::LoadSettings (const char* settings) {
   UpdateInterfacesFromSettings();
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 const char* CANFDMolinaroAnalyzerSettings::SaveSettings () {
   SimpleArchive text_archive;
@@ -253,4 +253,4 @@ const char* CANFDMolinaroAnalyzerSettings::SaveSettings () {
   return SetReturnString (text_archive.GetString ()) ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------

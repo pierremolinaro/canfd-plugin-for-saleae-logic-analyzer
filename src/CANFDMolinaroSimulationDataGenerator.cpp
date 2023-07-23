@@ -1,29 +1,29 @@
 #include "CANFDMolinaroSimulationDataGenerator.h"
 #include "CANFDMolinaroAnalyzerSettings.h"
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 #include <AnalyzerHelpers.h>
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 //  CAN 2.0B FRAME GENERATOR
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 typedef enum {standardFrame, extendedFrame} FrameFormat ;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 typedef enum {dataFrame, remoteFrame} FrameType ;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 typedef enum {DOMINANT_BIT, RECESSIVE_BIT} GeneratedBit ;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 static const uint32_t CAN_FRAME_MAX_LENGTH = 160 ;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 class CANFrameBitsGenerator {
   public : CANFrameBitsGenerator (const uint32_t inIdentifier,
@@ -52,7 +52,8 @@ class CANFrameBitsGenerator {
   private : uint16_t mCRCAccumulator ;
 } ;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
+
 CANFrameBitsGenerator::CANFrameBitsGenerator (const uint32_t inIdentifier,
                                               const FrameFormat inFrameFormat,
                                               const uint8_t inDataLength,
@@ -126,7 +127,7 @@ mCRCAccumulator (0) {
   mFrameLength += 11 ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFrameBitsGenerator::enterBitAppendStuff (const bool inBit) {
 //--- Compute CRC
@@ -163,7 +164,7 @@ void CANFrameBitsGenerator::enterBitAppendStuff (const bool inBit) {
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFrameBitsGenerator::enterBitNoStuff (const bool inBit) {
 //--- Emit bit
@@ -175,7 +176,7 @@ void CANFrameBitsGenerator::enterBitNoStuff (const bool inBit) {
   mFrameLength ++ ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 bool CANFrameBitsGenerator::bitAtIndex (const uint32_t inIndex) const {
   bool result = true ; // RECESSIF
@@ -187,9 +188,9 @@ bool CANFrameBitsGenerator::bitAtIndex (const uint32_t inIndex) const {
   return result ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 //  CANFD FRAME GENERATOR
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 class CANFDFrameBitsGenerator {
   public : CANFDFrameBitsGenerator (const uint32_t inIdentifier,
@@ -239,7 +240,7 @@ class CANFDFrameBitsGenerator {
   private: uint8_t mConsecutiveBitCount ;
 } ;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 CANFDFrameBitsGenerator::CANFDFrameBitsGenerator (const uint32_t inIdentifier,
                                                   const FrameFormat inFrameFormat,
@@ -389,9 +390,10 @@ mConsecutiveBitCount (1) {
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-void CANFDFrameBitsGenerator::enterBitInFrameComputeCRC (const bool inBit, const bool inUseDataBitRate) {
+void CANFDFrameBitsGenerator::enterBitInFrameComputeCRC (const bool inBit,
+                                                         const bool inUseDataBitRate) {
 //--- Enter bit in frame
   enterBitInFrame (inBit, inUseDataBitRate) ;
 //--- Enter in CRC17
@@ -412,9 +414,10 @@ void CANFDFrameBitsGenerator::enterBitInFrameComputeCRC (const bool inBit, const
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-void CANFDFrameBitsGenerator::enterBitComputeCRCAppendStuff (const bool inBit, const bool inUseDataBitRate) {
+void CANFDFrameBitsGenerator::enterBitComputeCRCAppendStuff (const bool inBit,
+                                                           const bool inUseDataBitRate) {
 //--- Enter bit in frame
   enterBitInFrameComputeCRC (inBit, inUseDataBitRate) ;
 //--- Add a stuff bit ?
@@ -432,9 +435,10 @@ void CANFDFrameBitsGenerator::enterBitComputeCRCAppendStuff (const bool inBit, c
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-void CANFDFrameBitsGenerator::enterBitInFrame (const bool inBit, const bool inUseDataBitRate) {
+void CANFDFrameBitsGenerator::enterBitInFrame (const bool inBit,
+                                               const bool inUseDataBitRate) {
   const uint32_t idx = mFrameLength / 32 ;
   const uint32_t offset = mFrameLength % 32 ;
   if (!inBit) {
@@ -446,7 +450,7 @@ void CANFDFrameBitsGenerator::enterBitInFrame (const bool inBit, const bool inUs
   mFrameLength += 1 ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 bool CANFDFrameBitsGenerator::bitAtIndex (const uint32_t inIndex) const {
   bool result = true ; // RECESSIF
@@ -458,7 +462,7 @@ bool CANFDFrameBitsGenerator::bitAtIndex (const uint32_t inIndex) const {
   return result ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 bool CANFDFrameBitsGenerator::dataBitRateAtIndex (const uint32_t inIndex) const {
   bool result = false ;
@@ -470,29 +474,29 @@ bool CANFDFrameBitsGenerator::dataBitRateAtIndex (const uint32_t inIndex) const 
   return result ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 uint8_t CANFDFrameBitsGenerator::lengthForCode (const uint8_t inDataLengthCode) {
   const uint8_t LENGTH [16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64} ;
   return LENGTH [inDataLengthCode] ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 //  CANMolinaroSimulationDataGenerator
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-CANMolinaroSimulationDataGenerator::CANMolinaroSimulationDataGenerator() {
+CANMolinaroSimulationDataGenerator::CANMolinaroSimulationDataGenerator () {
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 CANMolinaroSimulationDataGenerator::~CANMolinaroSimulationDataGenerator () {
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-void CANMolinaroSimulationDataGenerator::Initialize(const U32 simulation_sample_rate,
-                                                    CANFDMolinaroAnalyzerSettings * settings) {
+void CANMolinaroSimulationDataGenerator::Initialize (const U32 simulation_sample_rate,
+                                            CANFDMolinaroAnalyzerSettings * settings) {
   mSimulationSampleRateHz = simulation_sample_rate;
   mSettings = settings;
 
@@ -501,11 +505,12 @@ void CANMolinaroSimulationDataGenerator::Initialize(const U32 simulation_sample_
   mSerialSimulationData.SetInitialBitState (BIT_HIGH) ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-U32 CANMolinaroSimulationDataGenerator::GenerateSimulationData (const U64 largest_sample_requested,
-                                                                const U32 sample_rate,
-                                        SimulationChannelDescriptor** simulation_channel) {
+U32 CANMolinaroSimulationDataGenerator::GenerateSimulationData
+                                 (const U64 largest_sample_requested,
+                                  const U32 sample_rate,
+                                  SimulationChannelDescriptor** simulation_channel) {
   const U64 adjusted_largest_sample_requested = AnalyzerHelpers::AdjustSimulationTargetSample (
     largest_sample_requested,
     sample_rate,
@@ -530,10 +535,11 @@ U32 CANMolinaroSimulationDataGenerator::GenerateSimulationData (const U64 larges
   return 1;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-void CANMolinaroSimulationDataGenerator::createCANFrame (const U32 inSamplesPerArbitrationBit,
-                                                         const bool inInverted) {
+void CANMolinaroSimulationDataGenerator::createCANFrame
+                                                  (const U32 inSamplesPerArbitrationBit,
+                                                   const bool inInverted) {
   const U32 samplesPerDataBit = mSimulationSampleRateHz / mSettings->dataBitRate () ;
   const SimulatorGeneratedFrameType frameTypes = mSettings->generatedFrameType () ;
 //--- Select Frame type to generate
@@ -599,14 +605,15 @@ void CANMolinaroSimulationDataGenerator::createCANFrame (const U32 inSamplesPerA
   mSerialSimulationData.TransitionIfNeeded (inInverted ? BIT_LOW : BIT_HIGH) ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-void CANMolinaroSimulationDataGenerator::createCANFD_Frame (const U32 inSamplesPerArbitrationBit,
-                                                            const bool in_canfd_24_64,
-                                                            const U32 inSamplesPerDataBit,
-                                                            const bool inInverted,
-                                                            const AckSlot inAck,
-                                                            const bool inExtended) {
+void CANMolinaroSimulationDataGenerator::createCANFD_Frame
+                                                 (const U32 inSamplesPerArbitrationBit,
+                                                  const bool in_canfd_24_64,
+                                                  const U32 inSamplesPerDataBit,
+                                                  const bool inInverted,
+                                                  const AckSlot inAck,
+                                                  const bool inExtended) {
 //--- Select BSR level
   GeneratedBit bsr = GeneratedBit::DOMINANT_BIT ;
   switch (mSettings->generatedBSRSlot ()) {
@@ -670,7 +677,7 @@ void CANMolinaroSimulationDataGenerator::createCANFD_Frame (const U32 inSamplesP
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANMolinaroSimulationDataGenerator::createBaseCANFrame (const U32 inSamplesPerArbitrationBit,
                                                              const bool inInverted,
@@ -700,4 +707,4 @@ void CANMolinaroSimulationDataGenerator::createBaseCANFrame (const U32 inSamples
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------

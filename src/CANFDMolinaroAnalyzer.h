@@ -1,18 +1,18 @@
 #ifndef CANFDMOLINARO_ANALYZER_H
 #define CANFDMOLINARO_ANALYZER_H
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 #include <Analyzer.h>
 #include <AnalyzerResults.h>
 #include "CANFDMolinaroAnalyzerResults.h"
 #include "CANFDMolinaroSimulationDataGenerator.h"
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 class CANFDMolinaroAnalyzerSettings;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 
 class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
@@ -112,12 +112,12 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
   private: void handle_DECODER_ERROR_state (const bool inBit, const U64 inBitCenterSampleNumber) ;
 } ;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 extern "C" ANALYZER_EXPORT const char* __cdecl GetAnalyzerName();
 extern "C" ANALYZER_EXPORT Analyzer* __cdecl CreateAnalyzer( );
 extern "C" ANALYZER_EXPORT void __cdecl DestroyAnalyzer( Analyzer* analyzer );
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 #endif //CANFDMOLINARO_ANALYZER_H
