@@ -80,6 +80,7 @@ class ANALYZER_EXPORT CANFDMolinaroAnalyzer : public Analyzer2 {
   private: FrameType mFrameType ;
   private: bool mBRS ;
   private: bool mESI ;
+  private: bool mAcked ;
   private: AnalyzerResults::MarkerType mMarkerTypeForDataAndCRC ;
 
 //---------------- CAN decoder methods

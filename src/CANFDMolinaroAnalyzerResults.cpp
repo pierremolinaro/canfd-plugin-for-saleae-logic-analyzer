@@ -107,7 +107,11 @@ void CANFDMolinaroAnalyzerResults::GenerateText (const Frame & inFrame,
     break ;
   case ACK_FIELD_RESULT :
     if (inBubbleText) {
-      ioText << "ACK" ;
+      if (inFrame.mData1 != 0) {
+        ioText << "NAK\n" ;
+      }else{
+        ioText << "ACK\n" ;
+      }
     }
     break ;
   case SBC_FIELD_RESULT :
@@ -174,32 +178,31 @@ void CANFDMolinaroAnalyzerResults::GenerateFrameTabularText (const U64 inFrameIn
 
 //----------------------------------------------------------------------------------------
 
-void CANFDMolinaroAnalyzerResults::GenerateExportFile( const char* file, DisplayBase display_base, U32 export_type_user_id )
-{
-  std::ofstream file_stream( file, std::ios::out );
+void CANFDMolinaroAnalyzerResults::GenerateExportFile (const char* file,
+                                                       DisplayBase display_base,
+                                                       U32 export_type_user_id) {
+  std::ofstream file_stream (file, std::ios::out) ;
 
-  U64 trigger_sample = mAnalyzer->GetTriggerSample();
-  U32 sample_rate = mAnalyzer->GetSampleRate();
+  const U64 trigger_sample = mAnalyzer->GetTriggerSample();
+  const U32 sample_rate = mAnalyzer->GetSampleRate();
 
   file_stream << "Time [s],Value" << std::endl;
 
   U64 num_frames = GetNumFrames();
-  for( U32 i=0; i < num_frames; i++ )
-  {
+  for(U32 i = 0 ; i < num_frames ; i++) {
     Frame frame = GetFrame( i );
 
-    char time_str[128];
-    AnalyzerHelpers::GetTimeString( frame.mStartingSampleInclusive, trigger_sample, sample_rate, time_str, 128 );
+    char time_str[128] ;
+    AnalyzerHelpers::GetTimeString (frame.mStartingSampleInclusive, trigger_sample, sample_rate, time_str, 128);
 
-    char number_str[128];
-    AnalyzerHelpers::GetNumberString( frame.mData1, display_base, 8, number_str, 128 );
+    char number_str[128] ;
+    AnalyzerHelpers::GetNumberString (frame.mData1, display_base, 8, number_str, 128) ;
 
     file_stream << time_str << "," << number_str << std::endl;
 
-    if( UpdateExportProgressAndCheckForCancel( i, num_frames ) == true )
-    {
-      file_stream.close();
-      return;
+    if (UpdateExportProgressAndCheckForCancel (i, num_frames) == true) {
+      file_stream.close () ;
+      return ;
     }
   }
 

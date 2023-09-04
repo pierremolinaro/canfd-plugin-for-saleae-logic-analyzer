@@ -12,39 +12,39 @@ jobs:
   windows:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Build
       run: |
         cmake -B ${{github.workspace}}/build -A x64
         cmake --build ${{github.workspace}}/build --config Release
     - name: Upload windows build
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: windows
         path: ${{github.workspace}}/build/Analyzers/Release/*.dll
   macos:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Build
       run: |
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
         cmake --build ${{github.workspace}}/build
     - name: Upload MacOS build
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: macos
         path: ${{github.workspace}}/build/Analyzers/*.so
   linux:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Build
       run: |
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
         cmake --build ${{github.workspace}}/build
     - name: Upload Linux build
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: linux
         path: ${{github.workspace}}/build/Analyzers/*.so
@@ -53,7 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: download individual builds
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         path: ${{github.workspace}}/artifacts
     - name: zip
