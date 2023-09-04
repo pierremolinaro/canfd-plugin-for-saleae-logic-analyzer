@@ -60,7 +60,7 @@ jobs:
       run: |
         cd ${{github.workspace}}/artifacts
         zip -r ${{github.workspace}}/analyzer.zip .
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: all-platforms
         path: ${{github.workspace}}/artifacts/**
