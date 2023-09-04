@@ -581,7 +581,6 @@ void CANFDMolinaroAnalyzer::handle_CRCDEL_state (const bool inBit, U64 & ioBitCe
 
 void CANFDMolinaroAnalyzer::handle_ACK_state (const bool inBit, const U64 inBitCenterSampleNumber) {
   mFieldBitIndex ++ ;
-  U8 u8Acked = 0;
   if (mFieldBitIndex == 1) { // ACK SLOT
     addMark (inBitCenterSampleNumber, inBit ? AnalyzerResults::ErrorSquare : AnalyzerResults::DownArrow);
     mAcked = inBit ;
