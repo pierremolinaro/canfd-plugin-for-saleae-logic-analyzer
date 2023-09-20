@@ -59,7 +59,7 @@ jobs:
     - name: zip
       run: |
         cd ${{github.workspace}}/artifacts
-        zip -r ${{github.workspace}}/analyzer.zip .
+        zip -r ${{github.workspace}}/all-analyzers.zip .
     - uses: actions/upload-artifact@v3
       with:
         name: all-platforms
@@ -68,4 +68,4 @@ jobs:
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
-          files: ${{github.workspace}}/analyzer.zip
+          files: ${{github.workspace}}/all-analyzers.zip
