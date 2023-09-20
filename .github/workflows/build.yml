@@ -1,3 +1,5 @@
+# https://docs.github.com/fr/actions/using-workflows/workflow-syntax-for-github-actions
+
 name: Build
 
 on:
@@ -10,7 +12,7 @@ on:
 
 jobs:
   windows:
-    runs-on: windows-latest
+    runs-on: windows-2019
     steps:
     - uses: actions/checkout@v3
     - name: Build
@@ -33,7 +35,7 @@ jobs:
     - name: Upload MacOS build
       uses: actions/upload-artifact@v3
       with:
-        name: macos
+        name: macos-11-x86
         path: ${{github.workspace}}/build/Analyzers/*.so
   linux:
     runs-on: ubuntu-latest
