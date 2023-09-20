@@ -37,19 +37,19 @@ jobs:
       with:
         name: macos-11-x86
         path: ${{github.workspace}}/build/Analyzers/*.so
-  macos-arm64:
-    runs-on: [macos-11, ARM64]
-    steps:
-    - uses: actions/checkout@v3
-    - name: Build
-      run: |
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
-        cmake --build ${{github.workspace}}/build
-    - name: Upload MacOS build
-      uses: actions/upload-artifact@v3
-      with:
-        name: macos-11-arm64
-        path: ${{github.workspace}}/build/Analyzers/*.so
+  #macos-arm64:
+  #  runs-on: [macos-11, ARM64]
+  #  steps:
+  #  - uses: actions/checkout@v3
+  #  - name: Build
+  #    run: |
+  #      cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
+  #      cmake --build ${{github.workspace}}/build
+  #  - name: Upload MacOS build
+  #    uses: actions/upload-artifact@v3
+  #    with:
+  #      name: macos-11-arm64
+  #      path: ${{github.workspace}}/build/Analyzers/*.so
   linux:
     runs-on: ubuntu-latest
     steps:
@@ -64,7 +64,7 @@ jobs:
         name: linux
         path: ${{github.workspace}}/build/Analyzers/*.so
   publish:
-    needs: [windows, macos-x86, macos-arm64, linux]
+    needs: [windows, macos-x86, linux]
     runs-on: ubuntu-latest
     steps:
     - name: download individual builds
